@@ -1,0 +1,98 @@
+import { useMemo, useState } from 'react'
+import { ArrowUpRight, BedDouble, Building2, MapPin, Tag } from 'lucide-react'
+import type { Accommodation } from '../../types/accommodation.types'
+import styles from './AccommodationCard.module.css'
+
+interface Props {
+  accommodation: Accommodation
+  onViewDetails?: (id: number) => void
+}
+
+function hashString(value: string): number {
+  return [...value].reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0, 0)
+}
+
+function buildFallbackImage(name: string, city: string): string {
+  const palettes: [string, string][] = [
+    ['#0b1220', '#243b53'],
+    ['#1f2937', '#7c2d12'],
+    ['#1a1a1a', '#374151'],
+    ['#0f172a', '#475569'],
+    ['#2d1b30', '#5f2c82'],
+  ]
+  const palette = palettes[hashString(`${name}-${city}`) % palettes.length]
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(word => word[0]?.toUpperCase() ?? '')
+    .join('')
+
+  const escapedName = name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const escapedCity = city.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="${palette[0]}"/>
+          <stop offset="100%" stop-color="${palette[1]}"/>
+        </linearGradient>
+      </defs>
+      <rect width="900" height="560" fill="url(#bg)"/>
+      <circle cx="760" cy="90" r="120" fill="rgba(255,255,255,0.08)"/>
+      <text x="450" y="285" text-anchor="middle" font-size="150" font-weight="700" fill="rgba(255,255,255,0.2)" font-family="Arial,sans-serif">${initials || 'H'}</text>
+      <text x="60" y="470" font-size="48" font-weight="600" fill="rgba(255,255,255,0.95)" font-family="Arial,sans-serif">${escapedName}</text>
+      <text x="60" y="520" font-size="30" fill="rgba(255,255,255,0.78)" font-family="Arial,sans-serif">${escapedCity}</text>
+    </svg>
+  `.trim()
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
+export default function AccommodationCard({ accommodation, onViewDetails }: Props) {
+  const { id, name, city, category, address, image_url } = accommodation
+  const fallbackImage = useMemo(() => buildFallbackImage(name, city), [name, city])
+  const [forceFallback, setForceFallback] = useState(!image_url)
+  const currentImage = !forceFallback && image_url ? image_url : fallbackImage
+
+  return (
+    <article className={styles.card}>
+      <div className={styles.media}>
+        <img
+          className={styles.image}
+          src={currentImage}
+          alt={name}
+          loading="lazy"
+          onError={() => setForceFallback(true)}
+        />
+        <div className={styles.overlay} />
+        <p className={styles.category}>{category || 'Hébergement'}</p>
+        <p className={styles.cityPill}>
+          <MapPin size={13} />
+          <span>{city}</span>
+        </p>
+      </div>
+
+      <div className={styles.body}>
+        <div className={styles.top}>
+          <span className={styles.iconWrap}>
+            <Building2 size={16} />
+          </span>
+          <h2 className={styles.name}>{name}</h2>
+        </div>
+
+        <p className={styles.info}>
+          <Tag size={14} />
+          <span>{address}</span>
+        </p>
+
+        <button className={styles.cta} type="button" onClick={() => onViewDetails?.(id)}>
+          <BedDouble size={15} />
+          <span>Voir l'établissement</span>
+          <ArrowUpRight size={15} />
+        </button>
+      </div>
+    </article>
+  )
+}
