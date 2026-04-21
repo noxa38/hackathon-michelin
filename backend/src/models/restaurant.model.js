@@ -1,9 +1,21 @@
 import pool from '../config/db.js'
 
+export async function getAllRestaurants() {
+  const [rows] = await pool.execute(
+    `SELECT id, name, address, location, city, price, cuisine, longitude, latitude,
+            phone_number, michelin_url, website_url, award, stars, green_star,
+            facilities, description
+     FROM restaurants
+     ORDER BY stars DESC, name ASC`
+  )
+  return rows
+}
+
 export async function searchRestaurants(query, city) {
   const like = `%${query}%`
   const [rows] = await pool.execute(
-    `SELECT id, name, city, stars, cuisine, address
+    `SELECT id, name, address, location, city, price, cuisine,
+            michelin_url, award, stars, green_star
      FROM restaurants
      WHERE (name LIKE ? OR city LIKE ?)
        AND (? = '' OR city = ?)

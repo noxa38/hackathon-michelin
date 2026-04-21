@@ -1,7 +1,11 @@
-import { searchRestaurants, getRestaurantById } from '../models/restaurant.model.js'
+import { getAllRestaurants, searchRestaurants, getRestaurantById } from '../models/restaurant.model.js'
 
 export async function search(req, res) {
   const { q = '', city = '' } = req.query
+  if (!q && !city) {
+    const results = await getAllRestaurants()
+    return res.json(results)
+  }
   const results = await searchRestaurants(q, city)
   res.json(results)
 }

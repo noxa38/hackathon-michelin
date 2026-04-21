@@ -57,7 +57,8 @@
   transition: color 0.15s ease;
 }
 
-.navLink:hover {
+.navLink:hover,
+.navLinkActive {
   color: var(--color-red);
 }
 
@@ -112,7 +113,8 @@
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
-.bottomItem:hover {
+.bottomItem:hover,
+.bottomItemActive {
   color: var(--color-red);
   background-color: #fff0f2;
 }
