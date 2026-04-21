@@ -10,6 +10,18 @@ Tu es l'agent principal du projet de refonte du site du **Guide Michelin**.
 
 Ce projet est une refonte complète du site web du Guide Michelin, réalisée dans le cadre d'un hackathon. L'objectif est de moderniser l'expérience utilisateur tout en conservant l'identité visuelle et éditoriale de la marque Michelin.
 
+## Approche Mobile First
+
+**Toutes les interfaces sont conçues mobile en premier**, puis élargies pour les écrans plus grands.
+
+- Les styles de base ciblent les mobiles (≥ 375px)
+- Les breakpoints s'ajoutent via `@media (min-width: ...)` :
+  - `md` : 768px (tablettes)
+  - `lg` : 1024px (desktop)
+- Pas de styles desktop par défaut — tout part du mobile
+- Taille de police base : 16px mobile, peut augmenter sur desktop
+- Touch targets minimum : 44×44px sur mobile
+
 ## Stack technique
 
 **Frontend :**

@@ -1,0 +1,126 @@
+/* ── Header ───────────────────────────────────────────────── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--color-white);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  padding: 0 16px;
+}
+
+/* ── Logo ─────────────────────────────────────────────────── */
+.logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-red);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Navigation desktop (cachée sur mobile) ───────────────── */
+.nav {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 0 24px;
+    height: 64px;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .menuButton {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 40px;
+  }
+}
+
+/* ── Liens de navigation ──────────────────────────────────── */
+.navLink {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-black);
+  text-decoration: none;
+  letter-spacing: 0.3px;
+  transition: color 0.15s ease;
+}
+
+.navLink:hover {
+  color: var(--color-red);
+}
+
+/* ── Actions (profil + hamburger) ─────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profileButton,
+.menuButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-black);
+  border-radius: 50%;
+  transition: background-color 0.15s ease;
+}
+
+.profileButton:hover,
+.menuButton:hover {
+  background-color: #f5f5f5;
+}
+
+/* ── Menu mobile déroulant ────────────────────────────────── */
+.mobileMenu {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-white);
+}
+
+@media (min-width: 768px) {
+  .mobileMenu {
+    display: none;
+  }
+}
+
+.mobileLink {
+  padding: 16px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-black);
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.15s ease;
+}
+
+.mobileLink:hover {
+  background-color: #f9f9f9;
+}
