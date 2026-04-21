@@ -1,0 +1,332 @@
+/* ── Outer container (perspective) ────────────────────────── */
+.cardOuter {
+  height: 480px;
+  perspective: 1200px;
+  cursor: pointer;
+  outline: none;
+}
+
+/* ── Inner flipper ───────────────────────────────────────── */
+.cardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flipped {
+  transform: rotateY(180deg);
+}
+
+/* ── Shared face styles ──────────────────────────────────── */
+.cardFront,
+.cardBack {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e8e8e8;
+  background: var(--color-white);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Back face base rotation ─────────────────────────────── */
+.cardBack {
+  transform: rotateY(180deg);
+  padding: 24px;
+  gap: 0;
+}
+
+/* ════════════════════════════════════════════════════════
+   FACE AVANT
+   ════════════════════════════════════════════════════════ */
+
+/* ── Zone photo ──────────────────────────────────────────── */
+.photoArea {
+  position: relative;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.photoInitial {
+  font-size: 88px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.08);
+  text-transform: uppercase;
+  user-select: none;
+  line-height: 1;
+}
+
+.greenStarBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #166534;
+  background: rgba(220, 252, 231, 0.95);
+}
+
+.photoHint {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.3px;
+}
+
+/* ── Contenu avant ───────────────────────────────────────── */
+.frontContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 14px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Badge award ─────────────────────────────────────────── */
+.award {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.award3 {
+  background: var(--color-gold);
+  color: var(--color-white);
+}
+
+.award2 {
+  background: #9ca3af;
+  color: var(--color-white);
+}
+
+.award1 {
+  background: #f3f4f6;
+  color: var(--color-black);
+}
+
+.awardSelected {
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  background: transparent;
+  font-weight: 500;
+}
+
+/* ── Nom ─────────────────────────────────────────────────── */
+.name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-black);
+  line-height: 1.25;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Lignes d'info ───────────────────────────────────────── */
+.infoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.infoIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #9ca3af;
+}
+
+/* ── Type de cuisine ─────────────────────────────────────── */
+.cuisine {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-black);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Bas de la face avant ───────────────────────────────── */
+.frontBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.price {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-black);
+  letter-spacing: 1px;
+}
+
+.likeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 100px;
+  border: 1px solid #e5e7eb;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 34px;
+}
+
+.likeBtn:hover {
+  border-color: var(--color-red);
+  color: var(--color-red);
+}
+
+.likedActive {
+  border-color: var(--color-red) !important;
+  color: var(--color-red) !important;
+  background: #fff5f6 !important;
+}
+
+/* ════════════════════════════════════════════════════════
+   FACE ARRIÈRE
+   ════════════════════════════════════════════════════════ */
+
+.backHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+
+.backName {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--color-black);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.backCuisine {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.backDescription {
+  flex: 1;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: #4b5563;
+  margin: 14px 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+.backDescription::-webkit-scrollbar {
+  width: 4px;
+}
+
+.backDescription::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+  border-radius: 4px;
+}
+
+/* ── Boutons back ────────────────────────────────────────── */
+.backActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.btnReserve,
+.btnFav,
+.btnSave {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 40px;
+  border-radius: 100px;
+  border: none;
+  font-family: var(--font-family);
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.btnReserve {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+.btnReserve:hover {
+  background: #c0001e;
+}
+
+.btnFav {
+  border: 1px solid #e5e7eb;
+  background: transparent;
+  color: #374151;
+}
+
+.btnFav:hover,
+.btnFav.likedActive {
+  border-color: var(--color-red);
+  color: var(--color-red);
+  background: #fff5f6;
+}
+
+.btnSave {
+  border: 1px solid #e5e7eb;
+  background: transparent;
+  color: #374151;
+}
+
+.btnSave:hover,
+.btnSave.savedActive {
+  border-color: var(--color-black);
+  color: var(--color-black);
+  background: #f9fafb;
+}

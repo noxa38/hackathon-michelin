@@ -5,7 +5,7 @@
 
 /* ── Hero ─────────────────────────────────────────────────── */
 .hero {
-  min-height: calc(100svh - 56px);
+  min-height: 100svh;
   background-color: var(--color-black);
   background-image: linear-gradient(
     to bottom,
@@ -15,7 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 16px;
+  padding: 40px 16px 96px;
 }
 
 @media (min-width: 768px) {

@@ -1,0 +1,148 @@
+/* ── Layout ───────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  padding-bottom: 88px; /* espace pour bottom nav mobile */
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+.header {
+  padding: 40px 16px 24px;
+  background: var(--color-black);
+  color: var(--color-white);
+}
+
+@media (min-width: 768px) {
+  .header {
+    padding: 48px 24px 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header {
+    padding: 56px 40px 32px;
+  }
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 2.4rem;
+  }
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--color-gray);
+  margin-top: 8px;
+}
+
+/* ── Filtres ──────────────────────────────────────────────── */
+.filters {
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .filters {
+    padding: 20px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .filters {
+    padding: 20px 40px;
+  }
+}
+
+.filterBtn {
+  white-space: nowrap;
+  padding: 8px 18px;
+  border-radius: 100px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-black);
+  min-height: 44px;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.filterBtn.active {
+  background: var(--color-black);
+  color: var(--color-white);
+  border-color: var(--color-black);
+}
+
+/* ── Grille ───────────────────────────────────────────────── */
+.grid {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    padding: 24px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    padding: 24px 40px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+/* ── États ────────────────────────────────────────────────── */
+.state {
+  display: flex;
+  justify-content: center;
+  padding: 64px 16px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e8e8e8;
+  border-top-color: var(--color-red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--color-red);
+  font-size: 0.9rem;
+}
+
+.empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--color-gray);
+  font-size: 0.9rem;
+}

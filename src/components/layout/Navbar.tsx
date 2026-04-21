@@ -1,57 +1,47 @@
-import { useState } from 'react'
-import { UserCircle, Menu, X } from 'lucide-react'
+import { UserCircle, Utensils, BedDouble, Bookmark, Home } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
 import styles from './Navbar.module.css'
 
 export default function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false)
+  const { pathname } = useLocation()
 
   return (
-    <header className={styles.header}>
-      <div className={styles.container}>
-        {/* Logo */}
-        <a href="/" className={styles.logo}>
-          Michelin Guide
-        </a>
+    <>
+      {/* Barre du haut — desktop uniquement */}
+      <header className={styles.header}>
+        <div className={styles.container}>
+          <Link to="/" className={styles.logo}>Michelin Guide</Link>
 
-        {/* Navigation desktop */}
-        <nav className={styles.nav} aria-label="Navigation principale">
-          <a href="/restaurants" className={styles.navLink}>Restaurants</a>
-          <a href="/hebergements" className={styles.navLink}>Hébergements</a>
-          <a href="/mes-listes" className={styles.navLink}>Mes listes</a>
-        </nav>
+          <nav className={styles.nav} aria-label="Navigation principale">
+            <Link to="/restaurants" className={`${styles.navLink} ${pathname === '/restaurants' ? styles.navLinkActive : ''}`}>Restaurants</Link>
+            <Link to="/hebergements" className={`${styles.navLink} ${pathname === '/hebergements' ? styles.navLinkActive : ''}`}>Hébergements</Link>
+            <Link to="/mes-listes" className={`${styles.navLink} ${pathname === '/mes-listes' ? styles.navLinkActive : ''}`}>Mes listes</Link>
+          </nav>
 
-        {/* Actions */}
-        <div className={styles.actions}>
           <button className={styles.profileButton} aria-label="Mon profil">
-            <UserCircle size={28} />
-          </button>
-
-          {/* Hamburger (mobile only) */}
-          <button
-            className={styles.menuButton}
-            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen(prev => !prev)}
-          >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            <UserCircle size={26} />
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Menu mobile déroulant */}
-      {menuOpen && (
-        <nav className={styles.mobileMenu} aria-label="Menu mobile">
-          <a href="/restaurants" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-            Restaurants
-          </a>
-          <a href="/hebergements" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-            Hébergements
-          </a>
-          <a href="/mes-listes" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-            Mes listes
-          </a>
-        </nav>
-      )}
-    </header>
+      {/* Barre du bas — mobile uniquement */}
+      <nav className={styles.bottomNav} aria-label="Navigation principale">
+        <Link to="/" className={`${styles.bottomItem} ${pathname === '/' ? styles.bottomItemActive : ''}`} aria-label="Accueil">
+          <Home size={22} />
+        </Link>
+        <Link to="/restaurants" className={`${styles.bottomItem} ${pathname === '/restaurants' ? styles.bottomItemActive : ''}`} aria-label="Restaurants">
+          <Utensils size={22} />
+        </Link>
+        <Link to="/hebergements" className={`${styles.bottomItem} ${pathname === '/hebergements' ? styles.bottomItemActive : ''}`} aria-label="Hébergements">
+          <BedDouble size={22} />
+        </Link>
+        <Link to="/mes-listes" className={`${styles.bottomItem} ${pathname === '/mes-listes' ? styles.bottomItemActive : ''}`} aria-label="Mes listes">
+          <Bookmark size={22} />
+        </Link>
+        <Link to="/profil" className={`${styles.bottomItem} ${pathname === '/profil' ? styles.bottomItemActive : ''}`} aria-label="Mon profil">
+          <UserCircle size={22} />
+        </Link>
+      </nav>
+    </>
   )
 }
