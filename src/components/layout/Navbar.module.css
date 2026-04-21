@@ -1,5 +1,6 @@
-/* ── Header ───────────────────────────────────────────────── */
+/* ── Top Header — desktop uniquement ─────────────────────── */
 .header {
+  display: none;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -7,17 +8,31 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+@media (min-width: 768px) {
+  .header {
+    display: block;
+  }
+}
+
 .container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;
-  padding: 0 16px;
+  height: 64px;
+  padding: 0 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 40px;
+  }
 }
 
 /* ── Logo ─────────────────────────────────────────────────── */
 .logo {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--color-red);
   text-decoration: none;
@@ -26,37 +41,13 @@
   white-space: nowrap;
 }
 
-/* ── Navigation desktop (cachée sur mobile) ───────────────── */
+/* ── Navigation desktop ───────────────────────────────────── */
 .nav {
-  display: none;
+  display: flex;
+  align-items: center;
+  gap: 32px;
 }
 
-@media (min-width: 768px) {
-  .container {
-    padding: 0 24px;
-    height: 64px;
-  }
-
-  .nav {
-    display: flex;
-    align-items: center;
-    gap: 32px;
-  }
-
-  .menuButton {
-    display: none;
-  }
-}
-
-@media (min-width: 1024px) {
-  .container {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 40px;
-  }
-}
-
-/* ── Liens de navigation ──────────────────────────────────── */
 .navLink {
   font-size: 0.9rem;
   font-weight: 500;
@@ -70,15 +61,8 @@
   color: var(--color-red);
 }
 
-/* ── Actions (profil + hamburger) ─────────────────────────── */
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.profileButton,
-.menuButton {
+/* ── Bouton profil ────────────────────────────────────────── */
+.profileButton {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -92,35 +76,43 @@
   transition: background-color 0.15s ease;
 }
 
-.profileButton:hover,
-.menuButton:hover {
+.profileButton:hover {
   background-color: #f5f5f5;
 }
 
-/* ── Menu mobile déroulant ────────────────────────────────── */
-.mobileMenu {
+/* ── Bottom Nav — mobile uniquement ──────────────────────── */
+.bottomNav {
   display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--color-border);
+  position: fixed;
+  bottom: 14px;
+  left: 14px;
+  right: 14px;
+  z-index: 100;
   background-color: var(--color-white);
+  border-radius: 22px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.14);
+  padding: 6px 4px;
 }
 
 @media (min-width: 768px) {
-  .mobileMenu {
+  .bottomNav {
     display: none;
   }
 }
 
-.mobileLink {
-  padding: 16px 20px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--color-black);
+.bottomItem {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  color: #aaaaaa;
   text-decoration: none;
-  border-bottom: 1px solid var(--color-border);
-  transition: background-color 0.15s ease;
+  border-radius: 16px;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
-.mobileLink:hover {
-  background-color: #f9f9f9;
+.bottomItem:hover {
+  color: var(--color-red);
+  background-color: #fff0f2;
 }
