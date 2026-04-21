@@ -70,7 +70,7 @@
   height: 32px;
   padding: 0 14px;
   border: 1.5px solid rgba(255, 255, 255, 0.45);
-  border-radius: 999px;
+  border-radius: 13px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(4px);
   cursor: pointer;
