@@ -4,6 +4,7 @@
   "type": "module",
   "main": "src/app.js",
   "scripts": {
+    "db:init": "node src/database/init-db.js",
     "dev": "nodemon src/app.js",
     "start": "node src/app.js"
   },
