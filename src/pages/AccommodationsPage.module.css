@@ -235,65 +235,15 @@
   color: var(--color-red);
 }
 
-.flipCard {
-  perspective: 1200px;
+.detailCard360 {
   min-height: 420px;
-  cursor: pointer;
-  outline: none;
-}
-
-.flipInner {
-  position: relative;
-  width: 100%;
-  min-height: 420px;
-  transform-style: preserve-3d;
-  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.flipped {
-  transform: rotateY(180deg);
-}
-
-.flipFace {
-  position: absolute;
-  inset: 0;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
   border-radius: 14px;
   border: 1px solid #efefef;
-  background: #fff;
+  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
   padding: 18px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-}
-
-.flipFront {
-  z-index: 2;
-  background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
-}
-
-.flipBack {
-  transform: rotateY(180deg);
-  overflow-y: auto;
-  background: linear-gradient(180deg, #fbfbfb 0%, #f4f4f4 100%);
-}
-
-.flipButton {
-  margin-top: auto;
-  align-self: flex-start;
-  border: none;
-  background: var(--color-black);
-  color: var(--color-white);
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  font-family: var(--font-family);
-  cursor: pointer;
-}
-
-.flipButton:hover {
-  background: #2b2b2b;
+  transform-style: preserve-3d;
+  animation: spinCard360 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 @keyframes modalIn {
@@ -304,5 +254,17 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spinCard360 {
+  0% {
+    transform: rotateY(0deg) scale(0.98);
+  }
+  55% {
+    transform: rotateY(225deg) scale(1);
+  }
+  100% {
+    transform: rotateY(360deg) scale(1);
   }
 }
