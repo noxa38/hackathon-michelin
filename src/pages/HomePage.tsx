@@ -1,20 +1,12 @@
 import { useState } from 'react'
-import { MapPin, Search } from 'lucide-react'
+import { MapPin, Search, Utensils, BedDouble, LayoutGrid } from 'lucide-react'
 import styles from './HomePage.module.css'
 
-type PlaceType = 'restaurant' | 'accommodation'
+type PlaceType = 'restaurant' | 'accommodation' | 'all'
 
 export default function HomePage() {
   const [query, setQuery] = useState('')
-  const [selectedTypes, setSelectedTypes] = useState<PlaceType[]>(['restaurant'])
-
-  function toggleType(type: PlaceType) {
-    setSelectedTypes(prev =>
-      prev.includes(type)
-        ? prev.length > 1 ? prev.filter(t => t !== type) : prev
-        : [...prev, type]
-    )
-  }
+  const [selectedType, setSelectedType] = useState<PlaceType>('restaurant')
 
   function handleLocate() {
     if (!navigator.geolocation) return
@@ -26,8 +18,8 @@ export default function HomePage() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: navigate to results with query + selectedTypes
-    console.log({ query, selectedTypes })
+    // TODO: navigate to results with query + selectedType
+    console.log({ query, selectedType })
   }
 
   return (
@@ -39,7 +31,38 @@ export default function HomePage() {
           </h1>
 
           <form className={styles.searchForm} onSubmit={handleSearch}>
-            {/* Barre de recherche + bouton Localiser */}
+            {/* Filtres de type — au-dessus de la barre */}
+            <div className={styles.typeFilters}>
+              <button
+                type="button"
+                className={`${styles.typeButton} ${selectedType === 'restaurant' ? styles.active : ''}`}
+                onClick={() => setSelectedType('restaurant')}
+                aria-pressed={selectedType === 'restaurant'}
+              >
+                <Utensils size={14} aria-hidden />
+                Restaurant
+              </button>
+              <button
+                type="button"
+                className={`${styles.typeButton} ${selectedType === 'accommodation' ? styles.active : ''}`}
+                onClick={() => setSelectedType('accommodation')}
+                aria-pressed={selectedType === 'accommodation'}
+              >
+                <BedDouble size={14} aria-hidden />
+                Hébergement
+              </button>
+              <button
+                type="button"
+                className={`${styles.typeButton} ${selectedType === 'all' ? styles.active : ''}`}
+                onClick={() => setSelectedType('all')}
+                aria-pressed={selectedType === 'all'}
+              >
+                <LayoutGrid size={14} aria-hidden />
+                Tout
+              </button>
+            </div>
+
+            {/* Barre de recherche + bouton Rechercher */}
             <div className={styles.searchBar}>
               <span className={styles.searchIcon}>
                 <Search size={20} aria-hidden />
@@ -52,39 +75,22 @@ export default function HomePage() {
                 onChange={e => setQuery(e.target.value)}
                 aria-label="Recherche"
               />
-              <button
-                type="button"
-                className={styles.locateButton}
-                onClick={handleLocate}
-                aria-label="Localiser"
-              >
-                <MapPin size={18} aria-hidden />
-                <span>Localiser</span>
-              </button>
+              <div className={styles.searchButtonWrapper}>
+                <button type="submit" className={styles.searchButton}>
+                  <Search size={16} aria-hidden />
+                  <span>Rechercher</span>
+                </button>
+              </div>
             </div>
 
-            {/* Filtres de type */}
-            <div className={styles.typeFilters}>
-              <button
-                type="button"
-                className={`${styles.typeButton} ${selectedTypes.includes('restaurant') ? styles.active : ''}`}
-                onClick={() => toggleType('restaurant')}
-                aria-pressed={selectedTypes.includes('restaurant')}
-              >
-                Restaurant
-              </button>
-              <button
-                type="button"
-                className={`${styles.typeButton} ${selectedTypes.includes('accommodation') ? styles.active : ''}`}
-                onClick={() => toggleType('accommodation')}
-                aria-pressed={selectedTypes.includes('accommodation')}
-              >
-                Hébergement
-              </button>
-            </div>
-
-            <button type="submit" className={styles.searchButton}>
-              Rechercher
+            {/* Localiser — lien texte sous la barre */}
+            <button
+              type="button"
+              className={styles.locateLink}
+              onClick={handleLocate}
+            >
+              <MapPin size={13} aria-hidden />
+              Utiliser ma position
             </button>
           </form>
         </div>
