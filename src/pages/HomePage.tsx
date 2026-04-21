@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MapPin, Search, Utensils, BedDouble, LayoutGrid } from 'lucide-react'
+import { Navigation, Search, Utensils, BedDouble, LayoutGrid } from 'lucide-react'
 import styles from './HomePage.module.css'
 
 type PlaceType = 'restaurant' | 'accommodation' | 'all'
@@ -89,7 +89,7 @@ export default function HomePage() {
               className={styles.locateLink}
               onClick={handleLocate}
             >
-              <MapPin size={13} aria-hidden />
+              <Navigation size={13} strokeWidth={2.5} aria-hidden />
               Utiliser ma position
             </button>
           </form>
