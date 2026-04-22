@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
+import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
+import { divIcon, latLngBounds, type LatLngTuple } from "leaflet";
+import "leaflet/dist/leaflet.css";
 import {
   ArrowLeft,
   Building2,
@@ -20,6 +23,43 @@ import styles from "./AccommodationDetailPage.module.css";
 interface NearbyRestaurant extends RestaurantNearbyRaw {
   distanceKm: number;
 }
+
+type MapCoordinate = LatLngTuple;
+
+function MapBoundsController({
+  positions,
+}: {
+  positions: MapCoordinate[];
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!positions.length) return;
+    if (positions.length === 1) {
+      map.setView(positions[0], 13);
+      return;
+    }
+    map.fitBounds(latLngBounds(positions), {
+      padding: [36, 36],
+    });
+  }, [map, positions]);
+
+  return null;
+}
+
+const hotelMarkerIcon = divIcon({
+  className: "",
+  html: `<div style="width:34px;height:34px;border-radius:999px;background:linear-gradient(145deg,#ff3352 0%,#b8001f 100%);color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 10px 24px rgba(184,0,31,.45);font-weight:800;font-size:12px;">H</div>`,
+  iconSize: [34, 34],
+  iconAnchor: [17, 17],
+});
+
+const restaurantMarkerIcon = divIcon({
+  className: "",
+  html: `<div style="width:30px;height:30px;border-radius:999px;background:linear-gradient(145deg,#212121 0%,#3a3a3a 100%);color:#ffd166;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 10px 20px rgba(15,23,42,.38);font-weight:900;font-size:14px;">★</div>`,
+  iconSize: [30, 30],
+  iconAnchor: [15, 15],
+});
 
 export default function AccommodationDetailPage() {
   const initialReservationForm = {
@@ -42,6 +82,7 @@ export default function AccommodationDetailPage() {
   const [reservationOpen, setReservationOpen] = useState(false);
   const [reservationSubmitted, setReservationSubmitted] = useState(false);
   const [reservationForm, setReservationForm] = useState(initialReservationForm);
+  const mapSectionRef = useRef<HTMLElement | null>(null);
 
   const hotelLatitude = useMemo(() => {
     const parsed = Number(accommodation?.latitude);
@@ -52,6 +93,53 @@ export default function AccommodationDetailPage() {
     const parsed = Number(accommodation?.longitude);
     return Number.isFinite(parsed) ? parsed : null;
   }, [accommodation?.longitude]);
+
+  const hotelAccessUrl = useMemo(() => {
+    if (hotelLatitude !== null && hotelLongitude !== null) {
+      return `https://www.google.com/maps/dir/?api=1&destination=${hotelLatitude},${hotelLongitude}`;
+    }
+
+    const destination = [
+      accommodation?.name,
+      accommodation?.address,
+      accommodation?.city,
+      accommodation?.country,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    if (!destination) return null;
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+  }, [
+    accommodation?.address,
+    accommodation?.city,
+    accommodation?.country,
+    accommodation?.name,
+    hotelLatitude,
+    hotelLongitude,
+  ]);
+
+  const hotelPosition = useMemo<MapCoordinate | null>(() => {
+    if (hotelLatitude === null || hotelLongitude === null) return null;
+    return [hotelLatitude, hotelLongitude];
+  }, [hotelLatitude, hotelLongitude]);
+
+  const restaurantPositions = useMemo<MapCoordinate[]>(
+    () =>
+      nearbyRestaurants
+        .filter(
+          (restaurant) =>
+            Number.isFinite(Number(restaurant.latitude)) &&
+            Number.isFinite(Number(restaurant.longitude)),
+        )
+        .map((restaurant) => [restaurant.latitude, restaurant.longitude]),
+    [nearbyRestaurants],
+  );
+
+  const mapPositions = useMemo<MapCoordinate[]>(
+    () => (hotelPosition ? [hotelPosition, ...restaurantPositions] : restaurantPositions),
+    [hotelPosition, restaurantPositions],
+  );
 
   useEffect(() => {
     if (!id) {
@@ -165,6 +253,13 @@ export default function AccommodationDetailPage() {
     } catch {
       // no-op
     }
+  }
+
+  function openHotelMapSection() {
+    setShowRestaurantsMap(true);
+    requestAnimationFrame(() => {
+      mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   if (loading) {
@@ -302,7 +397,7 @@ export default function AccommodationDetailPage() {
         </article>
 
         {showRestaurantsMap && (
-          <section className={styles.mapSection}>
+          <section ref={mapSectionRef} className={styles.mapSection}>
             <div className={styles.mapHeader}>
               <h2 className={styles.panelTitle}>Restaurants à proximité</h2>
               {loadingRestaurants ? (
@@ -327,12 +422,48 @@ export default function AccommodationDetailPage() {
                       Ouvrir en plein écran
                     </a>
                   </div>
-                  <iframe
-                    title="Carte de l'hôtel et restaurants proches"
-                    className={styles.map}
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://maps.google.com/maps?q=${hotelLatitude},${hotelLongitude}&z=13&output=embed`}
-                  />
+                  {hotelPosition ? (
+                    <MapContainer
+                      center={hotelPosition}
+                      zoom={13}
+                      scrollWheelZoom
+                      className={styles.map}
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                      />
+                      <MapBoundsController positions={mapPositions} />
+                      <Marker position={hotelPosition} icon={hotelMarkerIcon}>
+                        <Popup>
+                          <strong>{accommodation.name}</strong>
+                          <br />
+                          {accommodation.city}
+                        </Popup>
+                      </Marker>
+                      {nearbyRestaurants.map((restaurant) => (
+                        <Marker
+                          key={restaurant.id}
+                          position={[restaurant.latitude, restaurant.longitude]}
+                          icon={restaurantMarkerIcon}
+                        >
+                          <Popup>
+                            <strong>{restaurant.name}</strong>
+                            <br />
+                            {restaurant.city} - {restaurant.distanceKm.toFixed(1)} km
+                            <br />
+                            <a
+                              href={`https://www.google.com/maps?q=${restaurant.latitude},${restaurant.longitude}`}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Ouvrir dans Google Maps
+                            </a>
+                          </Popup>
+                        </Marker>
+                      ))}
+                    </MapContainer>
+                  ) : null}
                   <div className={styles.mapLegend}>
                     <span className={`${styles.legendItem} ${styles.legendHotel}`}>
                       Hôtel
@@ -440,6 +571,36 @@ export default function AccommodationDetailPage() {
 
           <div className={styles.panel}>
             <h2 className={styles.panelTitle}>Chambres & tarifs</h2>
+            {(hotelAccessUrl ||
+              (accommodation.source === "hotels" &&
+                hotelLatitude !== null &&
+                hotelLongitude !== null)) && (
+              <div className={styles.roomAccessActions}>
+                {accommodation.source === "hotels" &&
+                hotelLatitude !== null &&
+                hotelLongitude !== null ? (
+                  <button
+                    type="button"
+                    className={`${styles.button} ${styles.roomMapButton}`}
+                    onClick={openHotelMapSection}
+                  >
+                    <MapPin size={16} />
+                    <span>Voir l'hôtel sur la carte</span>
+                  </button>
+                ) : null}
+                {hotelAccessUrl ? (
+                  <a
+                    className={`${styles.button} ${styles.primaryButton} ${styles.roomAccessButton}`}
+                    href={hotelAccessUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <MapPin size={16} />
+                    <span>Ouvrir dans Google Maps</span>
+                  </a>
+                ) : null}
+              </div>
+            )}
             {roomDetails.length === 0 ? (
               <p className={styles.text}>Aucune information de chambre disponible.</p>
             ) : (

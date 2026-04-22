@@ -4,11 +4,14 @@ import {
   CalendarCheck2,
   ChevronLeft,
   ChevronRight,
+  Database,
   Heart,
   MapPin,
   Phone,
   Search,
+  SlidersHorizontal,
   Star,
+  Tags,
   X,
 } from "lucide-react";
 import {
@@ -18,6 +21,15 @@ import {
 import type { Accommodation } from "../types/accommodation.types";
 import AccommodationCard from "../components/features/AccommodationCard";
 import styles from "./AccommodationsPage.module.css";
+
+function normalizeForSearch(value: string | undefined | null): string {
+  if (!value) return "";
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
 
 export default function AccommodationsPage() {
   const ITEMS_PER_PAGE = 9;
@@ -46,6 +58,8 @@ export default function AccommodationsPage() {
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("");
   const [category, setCategory] = useState("all");
+  const [source, setSource] = useState("all");
+  const [minRating, setMinRating] = useState("0");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAccommodation, setSelectedAccommodation] =
     useState<Accommodation | null>(null);
@@ -85,6 +99,47 @@ export default function AccommodationsPage() {
     );
   }, [favoriteIds]);
 
+  const isAnyModalOpen = useMemo(
+    () =>
+      detailLoading ||
+      Boolean(detailError) ||
+      Boolean(selectedAccommodation) ||
+      Boolean(reservationAccommodation),
+    [detailError, detailLoading, reservationAccommodation, selectedAccommodation],
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined" || typeof window === "undefined") return;
+    if (!isAnyModalOpen) return;
+
+    const scrollY = window.scrollY;
+    const previousStyles = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    };
+
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
+
+    return () => {
+      document.body.style.overflow = previousStyles.overflow;
+      document.body.style.position = previousStyles.position;
+      document.body.style.top = previousStyles.top;
+      document.body.style.left = previousStyles.left;
+      document.body.style.right = previousStyles.right;
+      document.body.style.width = previousStyles.width;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isAnyModalOpen]);
+
   const categories = useMemo(() => {
     const allCategories = accommodations
       .map((a) => a.category)
@@ -114,14 +169,39 @@ export default function AccommodationsPage() {
   );
 
   const filtered = accommodations.filter((a) => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = normalizeForSearch(query);
+    const queryTokens = normalizedQuery.split(/\s+/).filter(Boolean);
+    const searchableText = normalizeForSearch(
+      [
+        a.name,
+        a.address,
+        a.city,
+        a.category,
+        a.country,
+        a.description,
+        a.facilities,
+      ].join(" "),
+    );
+
     const matchesQuery =
-      !normalizedQuery ||
-      a.name.toLowerCase().includes(normalizedQuery) ||
-      a.address.toLowerCase().includes(normalizedQuery);
-    const matchesCity = !city || a.city === city;
-    const matchesCategory = category === "all" || a.category === category;
-    return matchesQuery && matchesCity && matchesCategory;
+      queryTokens.length === 0 ||
+      queryTokens.every((token) => searchableText.includes(token));
+    const matchesCity =
+      !city || normalizeForSearch(a.city) === normalizeForSearch(city);
+    const matchesCategory =
+      category === "all" ||
+      normalizeForSearch(a.category) === normalizeForSearch(category);
+    const matchesSource = source === "all" || a.source === source;
+    const currentRating = a.rating_stars ?? a.stars ?? 0;
+    const matchesRating = currentRating >= Number(minRating);
+
+    return (
+      matchesQuery &&
+      matchesCity &&
+      matchesCategory &&
+      matchesSource &&
+      matchesRating
+    );
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -154,7 +234,7 @@ export default function AccommodationsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [query, city, category]);
+  }, [query, city, category, source, minRating]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -220,6 +300,14 @@ export default function AccommodationsPage() {
     navigate(`/hebergements/${id}`);
   }
 
+  function resetFilters() {
+    setQuery("");
+    setCity("");
+    setCategory("all");
+    setSource("all");
+    setMinRating("0");
+  }
+
   return (
     <main className={styles.main}>
       <section className={styles.header}>
@@ -272,6 +360,21 @@ export default function AccommodationsPage() {
       </section>
 
       <section className={styles.toolbar}>
+        <div className={styles.toolbarHeader}>
+          <p className={styles.toolbarTitle}>
+            <SlidersHorizontal size={15} />
+            Filtres avancés
+          </p>
+          <button
+            type="button"
+            className={styles.resetFiltersButton}
+            onClick={resetFilters}
+          >
+            <X size={14} />
+            Réinitialiser
+          </button>
+        </div>
+
         <label className={styles.searchWrap}>
           <Search size={16} />
           <input
@@ -283,35 +386,82 @@ export default function AccommodationsPage() {
           />
         </label>
 
-        <select
-          className={styles.select}
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          aria-label="Filtrer par ville"
-        >
-          <option value="">Toutes les villes</option>
-          {cities.filter(Boolean).map((cityName) => (
-            <option key={cityName} value={cityName}>
-              {cityName}
-            </option>
-          ))}
-        </select>
-
-        <select
-          className={styles.select}
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          aria-label="Filtrer par catégorie"
-        >
-          <option value="all">Toutes les catégories</option>
-          {categories
-            .filter((c) => c !== "all")
-            .map((categoryName) => (
-              <option key={categoryName} value={categoryName}>
-                {categoryName}
+        <label className={styles.filterWrap}>
+          <span className={styles.filterLabel}>
+            <MapPin size={14} />
+            Ville
+          </span>
+          <select
+            className={styles.select}
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            aria-label="Filtrer par ville"
+          >
+            <option value="">Toutes les villes</option>
+            {cities.filter(Boolean).map((cityName) => (
+              <option key={cityName} value={cityName}>
+                {cityName}
               </option>
             ))}
-        </select>
+          </select>
+        </label>
+
+        <label className={styles.filterWrap}>
+          <span className={styles.filterLabel}>
+            <Tags size={14} />
+            Catégorie
+          </span>
+          <select
+            className={styles.select}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            aria-label="Filtrer par catégorie"
+          >
+            <option value="all">Toutes les catégories</option>
+            {categories
+              .filter((c) => c !== "all")
+              .map((categoryName) => (
+                <option key={categoryName} value={categoryName}>
+                  {categoryName}
+                </option>
+              ))}
+          </select>
+        </label>
+
+        <label className={styles.filterWrap}>
+          <span className={styles.filterLabel}>
+            <Database size={14} />
+            Source
+          </span>
+          <select
+            className={styles.select}
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            aria-label="Filtrer par source"
+          >
+            <option value="all">Toutes les sources</option>
+            <option value="hotels">Base hotels</option>
+            <option value="accommodations">Seed accommodations</option>
+          </select>
+        </label>
+
+        <label className={styles.filterWrap}>
+          <span className={styles.filterLabel}>
+            <Star size={14} />
+            Note minimale
+          </span>
+          <select
+            className={styles.select}
+            value={minRating}
+            onChange={(e) => setMinRating(e.target.value)}
+            aria-label="Filtrer par note minimale"
+          >
+            <option value="0">Toutes les notes</option>
+            <option value="3">3+ étoiles</option>
+            <option value="4">4+ étoiles</option>
+            <option value="5">5 étoiles</option>
+          </select>
+        </label>
       </section>
 
       {loading && (

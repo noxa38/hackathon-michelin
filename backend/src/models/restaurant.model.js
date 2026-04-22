@@ -63,6 +63,19 @@ export async function getNearbyRestaurants(
   radiusKm = 20,
   limit = 12,
 ) {
+  const safeLatitude = Number(latitude);
+  const safeLongitude = Number(longitude);
+  const safeRadiusKm = Number.isFinite(Number(radiusKm))
+    ? Math.min(Math.max(Number(radiusKm), 1), 200)
+    : 20;
+  const safeLimit = Number.isFinite(Number(limit))
+    ? Math.min(Math.max(Math.floor(Number(limit)), 1), 100)
+    : 12;
+
+  if (!Number.isFinite(safeLatitude) || !Number.isFinite(safeLongitude)) {
+    return [];
+  }
+
   const [rows] = await pool.execute(
     `SELECT id,
             name,
@@ -77,10 +90,10 @@ export async function getNearbyRestaurants(
      FROM restaurants
      WHERE latitude IS NOT NULL
        AND longitude IS NOT NULL
-     HAVING distance_km <= ?
+     HAVING distance_km <= ${safeRadiusKm}
      ORDER BY distance_km ASC
-     LIMIT ?`,
-    [latitude, longitude, latitude, radiusKm, limit],
+     LIMIT ${safeLimit}`,
+    [safeLatitude, safeLongitude, safeLatitude],
   );
   return rows;
 }

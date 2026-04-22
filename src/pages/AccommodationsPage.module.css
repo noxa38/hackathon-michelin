@@ -197,9 +197,50 @@
   gap: 10px;
   padding: 14px;
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.toolbarHeader {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.toolbarTitle {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.resetFiltersButton {
+  border: 1px solid #dbe4ef;
   background: #ffffff;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  color: #334155;
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 0 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetFiltersButton:hover {
+  border-color: #94a3b8;
+  transform: translateY(-1px);
 }
 
 .searchWrap {
@@ -228,21 +269,42 @@
   color: #0f172a;
 }
 
-.select {
-  width: 100%;
-  min-height: 46px;
+.filterWrap {
   border: 1px solid #dbe4ef;
   border-radius: 12px;
-  padding: 0 12px;
+  background: #ffffff;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.filterLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.select {
+  width: 100%;
+  min-height: 36px;
+  border: none;
+  border-radius: 8px;
+  padding: 0;
   font-family: var(--font-family);
   font-size: 0.9rem;
   background: #ffffff;
   color: #0f172a;
-  transition: border-color 0.2s ease;
+  transition: color 0.2s ease;
 }
 
 .select:focus {
-  border-color: #94a3b8;
+  color: #020617;
   outline: none;
 }
 
@@ -483,13 +545,14 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto;
 }
 
 .modal {
   position: relative;
   width: min(920px, 100%);
   max-height: 90vh;
-  overflow: hidden;
+  overflow-y: auto;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 20px;
@@ -586,6 +649,7 @@
   position: absolute;
   top: 12px;
   right: 12px;
+  z-index: 40;
   border: 1px solid #dbe4ef;
   background: #ffffff;
   color: #0f172a;
@@ -596,6 +660,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.16);
 }
 
 .modalLoading,
@@ -633,11 +698,15 @@
   backface-visibility: hidden;
   border-radius: 14px;
   border: 1px solid #e2e8f0;
-  overflow: hidden;
+  overflow-x: hidden;
   background: #ffffff;
   padding: 14px;
   display: flex;
   flex-direction: column;
+}
+
+.detailCardFront {
+  overflow-y: auto;
 }
 
 .detailCardBack {
@@ -731,7 +800,7 @@
   border: 1px solid #e2e8f0;
   padding: 14px;
   min-height: 0;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 .detailMetaGrid {
@@ -902,7 +971,7 @@
   }
 
   .toolbar {
-    grid-template-columns: 1.4fr 1fr 1fr;
+    grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr));
     padding: 16px;
   }
 
@@ -949,13 +1018,29 @@
 }
 
 @media (max-width: 640px) {
+  .toolbarHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .resetFiltersButton {
+    width: 100%;
+    justify-content: center;
+  }
+
   .headerStats {
     grid-template-columns: 1fr;
   }
 
   .modal {
     width: 100%;
-    max-height: 94vh;
+    max-height: calc(100dvh - 24px);
+    padding: 12px;
+    margin: auto 0;
+  }
+
+  .modalBackdrop {
+    align-items: flex-start;
     padding: 12px;
   }
 
@@ -971,7 +1056,43 @@
   }
 
   .detailCardOuter {
-    height: min(700px, calc(94vh - 48px));
+    height: auto;
+    max-height: calc(100dvh - 110px);
+    overflow-y: auto;
+    perspective: none;
+  }
+
+  .detailCardInner {
+    height: auto;
+    transform: none !important;
+    transform-style: flat;
+  }
+
+  .detailCardFront,
+  .detailCardBack {
+    position: relative;
+    inset: auto;
+    -webkit-backface-visibility: visible;
+    backface-visibility: visible;
+    overflow: visible;
+    min-height: 0;
+  }
+
+  .detailCardFront {
+    display: flex;
+  }
+
+  .detailCardBack {
+    display: none;
+    transform: none;
+  }
+
+  .detailFlipped .detailCardFront {
+    display: none;
+  }
+
+  .detailFlipped .detailCardBack {
+    display: flex;
   }
 
   .detailVisualCard {
