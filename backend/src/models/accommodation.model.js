@@ -13,38 +13,16 @@ function parseImageUrls(rawValue, fallbackImage) {
 export async function searchAccommodations(query, city) {
   const like = `%${query}%`
   const [rows] = await pool.execute(
-<<<<<<< HEAD
-    `SELECT id,
-            name,
-            city,
-            category,
-            address
-     FROM accommodations
-     WHERE (name LIKE ? OR city LIKE ? OR address LIKE ?)
-       AND (? = '' OR city = ?)
-     LIMIT 50`,
-    [like, like, like, city, city]
-  )
-  return rows
-}
-
-export async function getAccommodationById(id) {
-  const [rows] = await pool.execute(
-    `SELECT id,
-=======
-    `SELECT CONCAT('h-', id) AS id,
+    `SELECT CONCAT('h-', h.id) AS id,
             'hotels' AS source,
->>>>>>> a991088 (phasna)
             name,
             city,
-            category,
+            CASE
+              WHEN h.stars >= 4 THEN 'Hôtel de luxe'
+              WHEN h.stars = 3 THEN 'Hôtel haut de gamme'
+              ELSE 'Hôtel'
+            END AS category,
             address,
-<<<<<<< HEAD
-            created_at
-     FROM accommodations
-     WHERE id = ?`,
-    [id]
-=======
             country,
             stars,
             rating_stars,
@@ -53,14 +31,31 @@ export async function getAccommodationById(id) {
             facilities,
             price_from,
             image_url
-     FROM hotels
+     FROM hotels h
      WHERE country = 'France'
        AND (name LIKE ? OR city LIKE ? OR address LIKE ?)
        AND (? = '' OR city = ?)
+    UNION ALL
+    SELECT CONCAT('a-', a.id) AS id,
+            'accommodations' AS source,
+            a.name AS name,
+            a.city AS city,
+            COALESCE(a.category, 'Hébergement') AS category,
+            a.address AS address,
+            NULL AS country,
+            NULL AS stars,
+            NULL AS rating_stars,
+            NULL AS phone,
+            NULL AS description,
+            NULL AS facilities,
+            NULL AS price_from,
+            a.photo_url AS image_url
+     FROM accommodations a
+     WHERE (a.name LIKE ? OR a.city LIKE ? OR a.address LIKE ?)
+       AND (? = '' OR a.city = ?)
      ORDER BY name ASC
-     LIMIT 80`,
-    [like, like, like, city, city]
->>>>>>> a991088 (phasna)
+     LIMIT 120`,
+    [like, like, like, city, city, like, like, like, city, city]
   )
   return rows
 }
