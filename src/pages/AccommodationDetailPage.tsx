@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
-import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import { divIcon, latLngBounds, type LatLngTuple } from "leaflet";
+import {
+  MapContainer,
+  Marker,
+  Popup,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
+import { divIcon, icon, latLngBounds, type LatLngTuple } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   ArrowLeft,
@@ -15,10 +21,11 @@ import {
   X,
 } from "lucide-react";
 import { fetchAccommodationById } from "../services/accommodation.service";
-import { fetchNearbyRestaurants } from "../services/restaurant.service";
+import { fetchAllRestaurants } from "../services/restaurant.service";
 import type { Accommodation, HotelRoomDetail } from "../types/accommodation.types";
 import type { RestaurantNearby as RestaurantNearbyRaw } from "../types/restaurant.types";
 import styles from "./AccommodationDetailPage.module.css";
+import michelinRestaurantIconUrl from "../../img/Michelin_Big_gourmand.png";
 
 interface NearbyRestaurant extends RestaurantNearbyRaw {
   distanceKm: number;
@@ -26,14 +33,37 @@ interface NearbyRestaurant extends RestaurantNearbyRaw {
 
 type MapCoordinate = LatLngTuple;
 
+function distanceInKm(
+  fromLat: number,
+  fromLng: number,
+  toLat: number,
+  toLng: number,
+): number {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const deltaLat = toRad(toLat - fromLat);
+  const deltaLng = toRad(toLng - fromLng);
+  const a =
+    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+    Math.cos(toRad(fromLat)) *
+      Math.cos(toRad(toLat)) *
+      Math.sin(deltaLng / 2) *
+      Math.sin(deltaLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusKm * c;
+}
+
 function MapBoundsController({
   positions,
+  fitRequest,
 }: {
   positions: MapCoordinate[];
+  fitRequest: number;
 }) {
   const map = useMap();
 
   useEffect(() => {
+    if (fitRequest <= 0) return;
     if (!positions.length) return;
     if (positions.length === 1) {
       map.setView(positions[0], 13);
@@ -42,7 +72,61 @@ function MapBoundsController({
     map.fitBounds(latLngBounds(positions), {
       padding: [36, 36],
     });
-  }, [map, positions]);
+  }, [map, positions, fitRequest]);
+
+  return null;
+}
+
+function VisibleRestaurantsController({
+  restaurants,
+  onVisibleCountChange,
+  onViewportRadiusKmChange,
+}: {
+  restaurants: NearbyRestaurant[];
+  onVisibleCountChange: (count: number) => void;
+  onViewportRadiusKmChange: (radiusKm: number) => void;
+}) {
+  const map = useMap();
+
+  const restaurantPoints = useMemo<MapCoordinate[]>(
+    () =>
+      restaurants
+        .map((restaurant) => [Number(restaurant.latitude), Number(restaurant.longitude)] as const)
+        .filter(
+          ([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng),
+        )
+        .map(([lat, lng]) => [lat, lng]),
+    [restaurants],
+  );
+
+  useEffect(() => {
+    const updateVisibleCount = () => {
+      const bounds = map.getBounds();
+      const visibleCount = restaurantPoints.filter((point) =>
+        bounds.contains(point),
+      ).length;
+      onVisibleCountChange(visibleCount);
+
+      const center = map.getCenter();
+      const northEast = bounds.getNorthEast();
+      const southWest = bounds.getSouthWest();
+      const viewportRadiusKm =
+        Math.max(
+          center.distanceTo(northEast),
+          center.distanceTo(southWest),
+        ) / 1000;
+      onViewportRadiusKmChange(viewportRadiusKm);
+    };
+
+    updateVisibleCount();
+    map.on("moveend", updateVisibleCount);
+    map.on("zoomend", updateVisibleCount);
+
+    return () => {
+      map.off("moveend", updateVisibleCount);
+      map.off("zoomend", updateVisibleCount);
+    };
+  }, [map, onVisibleCountChange, onViewportRadiusKmChange, restaurantPoints]);
 
   return null;
 }
@@ -54,11 +138,11 @@ const hotelMarkerIcon = divIcon({
   iconAnchor: [17, 17],
 });
 
-const restaurantMarkerIcon = divIcon({
-  className: "",
-  html: `<div style="width:30px;height:30px;border-radius:999px;background:linear-gradient(145deg,#212121 0%,#3a3a3a 100%);color:#ffd166;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 10px 20px rgba(15,23,42,.38);font-weight:900;font-size:14px;">★</div>`,
-  iconSize: [30, 30],
-  iconAnchor: [15, 15],
+const restaurantMarkerImageIcon = icon({
+  iconUrl: michelinRestaurantIconUrl,
+  iconSize: [36, 36],
+  iconAnchor: [18, 18],
+  popupAnchor: [0, -18],
 });
 
 export default function AccommodationDetailPage() {
@@ -79,6 +163,9 @@ export default function AccommodationDetailPage() {
   const [nearbyRestaurants, setNearbyRestaurants] = useState<NearbyRestaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(false);
   const [showRestaurantsMap, setShowRestaurantsMap] = useState(false);
+  const [visibleRestaurantsCount, setVisibleRestaurantsCount] = useState(0);
+  const [viewportRadiusKm, setViewportRadiusKm] = useState<number | null>(null);
+  const [fitAllRequest, setFitAllRequest] = useState(0);
   const [reservationOpen, setReservationOpen] = useState(false);
   const [reservationSubmitted, setReservationSubmitted] = useState(false);
   const [reservationForm, setReservationForm] = useState(initialReservationForm);
@@ -212,17 +299,38 @@ export default function AccommodationDetailPage() {
     }
 
     setLoadingRestaurants(true);
-    fetchNearbyRestaurants(hotelLatitude, hotelLongitude, 20, 12)
+    fetchAllRestaurants()
       .then((restaurants) => {
-        const candidates = restaurants.map((restaurant) => ({
-          ...restaurant,
-          distanceKm: Number(restaurant.distance_km),
-        }));
+        const candidates = restaurants
+          .filter(
+            (restaurant) =>
+              Number.isFinite(Number(restaurant.latitude)) &&
+              Number.isFinite(Number(restaurant.longitude)),
+          )
+          .map((restaurant) => {
+            const distanceKm = distanceInKm(
+              hotelLatitude,
+              hotelLongitude,
+              Number(restaurant.latitude),
+              Number(restaurant.longitude),
+            );
+            return {
+              ...restaurant,
+              distance_km: distanceKm,
+              distanceKm,
+            };
+          });
+        candidates.sort((left, right) => left.distanceKm - right.distanceKm);
         setNearbyRestaurants(candidates);
       })
       .catch(() => setNearbyRestaurants([]))
       .finally(() => setLoadingRestaurants(false));
   }, [accommodation, hotelLatitude, hotelLongitude]);
+
+  useEffect(() => {
+    setVisibleRestaurantsCount(nearbyRestaurants.length);
+    setViewportRadiusKm(null);
+  }, [nearbyRestaurants.length]);
 
   function handleReservation() {
     setReservationOpen(true);
@@ -404,7 +512,11 @@ export default function AccommodationDetailPage() {
                 <p className={styles.mapInfo}>Chargement des restaurants...</p>
               ) : (
                 <p className={styles.mapInfo}>
-                  {nearbyRestaurants.length} restaurant(s) trouvé(s) dans un rayon de 20 km
+                  {nearbyRestaurants.length} restaurant(s) au total ·{" "}
+                  {visibleRestaurantsCount} visible(s) dans la vue
+                  {viewportRadiusKm !== null
+                    ? ` (~${viewportRadiusKm.toFixed(1)} km autour du centre)`
+                    : ""}
                 </p>
               )}
             </div>
@@ -413,19 +525,28 @@ export default function AccommodationDetailPage() {
                 <div className={styles.mapWrap}>
                   <div className={styles.mapToolbar}>
                     <span className={styles.mapBadge}>Vue interactive</span>
-                    <a
-                      className={styles.mapExternalLink}
-                      href={`https://www.google.com/maps?q=${hotelLatitude},${hotelLongitude}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Ouvrir en plein écran
-                    </a>
+                    <div className={styles.mapToolbarActions}>
+                      <button
+                        type="button"
+                        className={styles.mapExternalLink}
+                        onClick={() => setFitAllRequest((current) => current + 1)}
+                      >
+                        Voir tous les restaurants
+                      </button>
+                      <a
+                        className={styles.mapExternalLink}
+                        href={`https://www.google.com/maps?q=${hotelLatitude},${hotelLongitude}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Ouvrir en plein écran
+                      </a>
+                    </div>
                   </div>
                   {hotelPosition ? (
                     <MapContainer
                       center={hotelPosition}
-                      zoom={13}
+                      zoom={15}
                       scrollWheelZoom
                       className={styles.map}
                     >
@@ -433,7 +554,15 @@ export default function AccommodationDetailPage() {
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                       />
-                      <MapBoundsController positions={mapPositions} />
+                      <MapBoundsController
+                        positions={mapPositions}
+                        fitRequest={fitAllRequest}
+                      />
+                      <VisibleRestaurantsController
+                        restaurants={nearbyRestaurants}
+                        onVisibleCountChange={setVisibleRestaurantsCount}
+                        onViewportRadiusKmChange={setViewportRadiusKm}
+                      />
                       <Marker position={hotelPosition} icon={hotelMarkerIcon}>
                         <Popup>
                           <strong>{accommodation.name}</strong>
@@ -445,7 +574,7 @@ export default function AccommodationDetailPage() {
                         <Marker
                           key={restaurant.id}
                           position={[restaurant.latitude, restaurant.longitude]}
-                          icon={restaurantMarkerIcon}
+                          icon={restaurantMarkerImageIcon}
                         >
                           <Popup>
                             <strong>{restaurant.name}</strong>
