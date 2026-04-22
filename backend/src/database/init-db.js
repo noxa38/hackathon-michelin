@@ -20,7 +20,19 @@ const seedPath = path.join(__dirname, "seed.sql");
 
 async function runSqlFile(connection, sqlFilePath) {
   const sql = await fs.readFile(sqlFilePath, "utf8");
-  await connection.query(sql);
+  const statements = sql
+    .split(/;\s*$/m)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+    
+  for (const statement of statements) {
+    try {
+      await connection.query(statement);
+    } catch (err) {
+      console.error("Error executing statement:", statement.substring(0, 100));
+      throw err;
+    }
+  }
 }
 
 async function initDatabase() {
@@ -34,7 +46,7 @@ async function initDatabase() {
 
   try {
     await serverConnection.query(
-      `CREATE DATABASE IF NOT EXISTS \`${database}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`,
+      `CREATE DATABASE IF NOT EXISTS \`${database}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
     );
   } finally {
     await serverConnection.end();
@@ -52,7 +64,6 @@ async function initDatabase() {
   try {
     await runSqlFile(dbConnection, schemaPath);
     await runSqlFile(dbConnection, seedPath);
-    console.log(`Database "${database}" initialized successfully.`);
   } finally {
     await dbConnection.end();
   }

@@ -43,7 +43,7 @@ export async function register(req, res) {
 
     // Générer un token JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, userType: user.user_type },
       SECRET_KEY,
       { expiresIn: "7d" }
     );
@@ -56,6 +56,7 @@ export async function register(req, res) {
         username: user.username,
         firstName: user.first_name,
         lastName: user.last_name,
+        userType: user.user_type,
         createdAt: user.created_at,
       },
     });
@@ -88,7 +89,7 @@ export async function login(req, res) {
 
     // Générer un token JWT
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, userType: user.user_type },
       SECRET_KEY,
       { expiresIn: "7d" }
     );
@@ -101,6 +102,7 @@ export async function login(req, res) {
         username: user.username,
         firstName: user.first_name,
         lastName: user.last_name,
+        userType: user.user_type,
         createdAt: user.created_at,
       },
     });
@@ -125,6 +127,7 @@ export async function getProfile(req, res) {
       username: user.username,
       firstName: user.first_name,
       lastName: user.last_name,
+      userType: user.user_type,
       avatarUrl: user.avatar_url,
       bio: user.bio,
       createdAt: user.created_at,
@@ -155,6 +158,7 @@ export async function updateProfile(req, res) {
       username: updatedUser.username,
       firstName: updatedUser.first_name,
       lastName: updatedUser.last_name,
+      userType: updatedUser.user_type,
       avatarUrl: updatedUser.avatar_url,
       bio: updatedUser.bio,
       createdAt: updatedUser.created_at,
@@ -186,6 +190,7 @@ export async function verifyToken(req, res) {
       username: user.username,
       firstName: user.first_name,
       lastName: user.last_name,
+      userType: user.user_type,
       createdAt: user.created_at,
     });
   } catch (error) {

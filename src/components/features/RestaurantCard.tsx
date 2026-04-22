@@ -8,6 +8,9 @@ interface Props {
   restaurant: Restaurant
   likes: number
   onLikeChange: (restaurantId: number, nextLiked: boolean) => void
+  isLiked?: boolean
+  isSaved?: boolean
+  onSaveClick?: (restaurantId: number) => void
 }
 
 const CUISINE_COLORS: [string, string][] = [
@@ -52,10 +55,15 @@ function AwardBadge({ stars, award, green_star }: { stars: number; award: string
   )
 }
 
-export default function RestaurantCard({ restaurant, likes, onLikeChange }: Props) {
+export default function RestaurantCard({
+  restaurant,
+  likes,
+  onLikeChange,
+  isLiked = false,
+  isSaved = false,
+  onSaveClick,
+}: Props) {
   const [flipped, setFlipped] = useState(false)
-  const [liked, setLiked] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [carouselOpen, setCarouselOpen] = useState(false)
 
   const { name, address, price, cuisine, description, opening_hours, stars, award, green_star, photos } = restaurant
@@ -64,16 +72,12 @@ export default function RestaurantCard({ restaurant, likes, onLikeChange }: Prop
 
   function handleLike(e: React.MouseEvent) {
     e.stopPropagation()
-    setLiked(current => {
-      const nextLiked = !current
-      onLikeChange(restaurant.id, nextLiked)
-      return nextLiked
-    })
+    onLikeChange(restaurant.id, !isLiked)
   }
 
   function handleSave(e: React.MouseEvent) {
     e.stopPropagation()
-    setSaved(s => !s)
+    onSaveClick?.(restaurant.id)
   }
 
   function handlePhotoClick(e: React.MouseEvent) {
@@ -136,11 +140,11 @@ export default function RestaurantCard({ restaurant, likes, onLikeChange }: Prop
             <div className={styles.frontBottom}>
               <span className={styles.price}>{price}</span>
               <button
-                className={`${styles.likeBtn} ${liked ? styles.likedActive : ''}`}
+                className={`${styles.likeBtn} ${isLiked ? styles.likedActive : ''}`}
                 onClick={handleLike}
                 aria-label="Liker ce restaurant"
               >
-                <Heart size={14} fill={liked ? 'currentColor' : 'none'} />
+                <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
                 <span>{likes}</span>
               </button>
             </div>
@@ -211,12 +215,12 @@ export default function RestaurantCard({ restaurant, likes, onLikeChange }: Prop
               Réserver
             </button>
             <button
-              className={`${styles.btnSave} ${saved ? styles.savedActive : ''}`}
+              className={`${styles.btnSave} ${isSaved ? styles.savedActive : ''}`}
               onClick={e => { e.stopPropagation(); handleSave(e) }}
-              aria-label={saved ? 'Retirer des enregistrements' : 'Enregistrer'}
-              title={saved ? 'Retirer des enregistrements' : 'Enregistrer'}
+              aria-label={isSaved ? 'Déjà enregistré' : 'Enregistrer'}
+              title={isSaved ? 'Déjà enregistré' : 'Enregistrer'}
             >
-              <Bookmark size={16} fill={saved ? 'currentColor' : 'none'} />
+              <Bookmark size={16} fill={isSaved ? 'currentColor' : 'none'} />
             </button>
           </div>
         </div>

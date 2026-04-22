@@ -8,10 +8,11 @@ import MyListsPage from './pages/MyListsPage'
 import IntroAnimation from './components/ui/IntroAnimation'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
+import AdminDashboardPage from './pages/AdminDashboardPage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 
 function AppContent() {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, userType } = useAuth()
 
   if (loading) {
     return <Navbar />
@@ -34,6 +35,10 @@ function AppContent() {
         <Route
           path="/dashboard"
           element={isAuthenticated ? <DashboardPage /> : <Navigate to="/auth" />}
+        />
+        <Route
+          path="/admin-dashboard"
+          element={isAuthenticated && userType === 'admin' ? <AdminDashboardPage /> : <Navigate to="/dashboard" />}
         />
       </Routes>
     </>

@@ -150,6 +150,72 @@
   color: #0f172a;
 }
 
+.cardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quickActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.heartBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 50px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 100px;
+  border: 1px solid #e5e7eb;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.heartBtn:hover {
+  border-color: var(--color-red);
+  color: var(--color-red);
+}
+
+.heartBtnActive {
+  border-color: var(--color-red) !important;
+  color: var(--color-red) !important;
+  background: #fff5f6 !important;
+}
+
+.saveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 100px;
+  border: 1px solid #e5e7eb;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.saveBtn:hover {
+  border-color: #111827;
+  color: #111827;
+}
+
+.saveBtnActive {
+  border-color: #111827 !important;
+  color: #111827 !important;
+  background: #f3f4f6 !important;
+}
+
 .cta {
   margin-top: 2px;
   min-height: 40px;

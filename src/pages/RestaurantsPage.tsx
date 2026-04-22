@@ -1,9 +1,15 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { Search, ChevronDown, X, Utensils, Award, Coins, Globe, ConciergeBell } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { fetchAllRestaurants } from '../services/restaurant.service'
+import { findOrCreateList, addRestaurantToList, removeRestaurantFromList, getListRestaurants, getLists } from '../services/list.service'
+import { getToken, getUser } from '../services/auth.service'
 import RestaurantCard from '../components/features/RestaurantCard'
+import SaveToListModal from '../components/features/SaveToListModal'
 import type { Restaurant } from '../types/restaurant.types'
 import styles from './RestaurantsPage.module.css'
+
+const RESTAURANTS_LIKED_LIST_NAME = 'Restaurants likés'
 
 type DistinctionKey = '3' | '2' | '1' | 'bib' | 'green'
 
@@ -67,6 +73,7 @@ function useClickOutside(
 type OpenMenu = 'distinction' | 'cuisine' | 'price' | 'country' | 'facility' | null
 
 export default function RestaurantsPage() {
+  const navigate = useNavigate()
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -78,6 +85,10 @@ export default function RestaurantsPage() {
   const [facilityFilters, setFacilityFilters] = useState<string[]>([])
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null)
   const [likesById, setLikesById] = useState<Record<number, number>>({})
+  const [likedRestaurantIds, setLikedRestaurantIds] = useState<Set<number>>(new Set())
+  const [savedRestaurantIds, setSavedRestaurantIds] = useState<Set<number>>(new Set())
+  const [saveTargetRestaurantId, setSaveTargetRestaurantId] = useState<number | null>(null)
+  const [saveModalOpen, setSaveModalOpen] = useState(false)
 
   const distinctionRef = useRef<HTMLDivElement>(null)
   const cuisineRef     = useRef<HTMLDivElement>(null)
@@ -109,6 +120,28 @@ export default function RestaurantsPage() {
           return acc
         }, {})
         setLikesById(initialLikes)
+        const token = getToken()
+        if (token) {
+          getLists(token)
+            .then(async (lists) => {
+              const likedList = lists.find((list) => list.name === RESTAURANTS_LIKED_LIST_NAME)
+              if (likedList) {
+                const likedRestaurants = await getListRestaurants(token, likedList.id).catch(() => [])
+                setLikedRestaurantIds(new Set(likedRestaurants.map((restaurant) => restaurant.id)))
+              }
+
+              const listsForSave = lists.filter((list) => list.name !== RESTAURANTS_LIKED_LIST_NAME)
+              const restaurantsByList = await Promise.all(
+                listsForSave.map((list) => getListRestaurants(token, list.id).catch(() => []))
+              )
+              const ids = new Set<number>()
+              restaurantsByList.flat().forEach((restaurant) => {
+                if (typeof restaurant.id === 'number') ids.add(restaurant.id)
+              })
+              setSavedRestaurantIds(ids)
+            })
+            .catch(() => {})
+        }
       })
       .catch(() => setError('Impossible de charger les restaurants. Vérifiez que le serveur est démarré.'))
       .finally(() => setLoading(false))
@@ -154,6 +187,13 @@ export default function RestaurantsPage() {
   )
 
   const handleLikeChange = useCallback((restaurantId: number, nextLiked: boolean) => {
+    const token = getToken()
+    const user = getUser()
+    if (!token || user?.userType === 'admin') {
+      navigate('/auth?message=lists')
+      return
+    }
+
     setLikesById(prev => {
       const currentLikes = prev[restaurantId] ?? 0
       return {
@@ -161,7 +201,37 @@ export default function RestaurantsPage() {
         [restaurantId]: nextLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1),
       }
     })
-  }, [])
+    setLikedRestaurantIds(prev => {
+      const next = new Set(prev)
+      if (nextLiked) next.add(restaurantId)
+      else next.delete(restaurantId)
+      return next
+    })
+    if (nextLiked) {
+      findOrCreateList(token, RESTAURANTS_LIKED_LIST_NAME)
+        .then(list => addRestaurantToList(token, list.id, restaurantId))
+        .catch(() => {})
+    } else {
+      getLists(token)
+        .then(lists => {
+          const likedList = lists.find((l: { name: string }) => l.name === RESTAURANTS_LIKED_LIST_NAME)
+          if (likedList) return removeRestaurantFromList(token, likedList.id, restaurantId)
+        })
+        .catch(() => {})
+    }
+  }, [navigate])
+
+  function handleOpenSaveModal(restaurantId: number) {
+    const token = getToken()
+    const user = getUser()
+    if (!token || user?.userType === 'admin') {
+      navigate('/auth?message=lists')
+      return
+    }
+
+    setSaveTargetRestaurantId(restaurantId)
+    setSaveModalOpen(true)
+  }
 
   const filtered = useMemo(() => {
     return restaurants.filter(r => {
@@ -210,6 +280,25 @@ export default function RestaurantsPage() {
   }
 
   return (
+    <>
+    <SaveToListModal
+      isOpen={saveModalOpen}
+      token={getToken()}
+      itemId={saveTargetRestaurantId}
+      itemType="restaurant"
+      title="Enregistrer ce restaurant"
+      onClose={() => {
+        setSaveModalOpen(false)
+        setSaveTargetRestaurantId(null)
+      }}
+      onSaved={(savedId) => {
+        setSavedRestaurantIds((current) => {
+          const next = new Set(current)
+          next.add(savedId)
+          return next
+        })
+      }}
+    />
     <main className={styles.main}>
       <section className={styles.header}>
         <div className={styles.headerShell}>
@@ -402,6 +491,9 @@ export default function RestaurantsPage() {
                   restaurant={restaurant}
                   likes={likesById[restaurant.id] ?? getInitialLikeCount(restaurant)}
                   onLikeChange={handleLikeChange}
+                  isLiked={likedRestaurantIds.has(restaurant.id)}
+                  isSaved={savedRestaurantIds.has(restaurant.id)}
+                  onSaveClick={handleOpenSaveModal}
                 />
               ))}
             </div>
@@ -409,6 +501,7 @@ export default function RestaurantsPage() {
         </>
       )}
     </main>
+    </>
   )
 }
 

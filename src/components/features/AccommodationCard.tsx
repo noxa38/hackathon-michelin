@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import {
   ArrowUpRight,
   BedDouble,
+  Bookmark,
   Building2,
+  Heart,
   MapPin,
   Tag,
 } from "lucide-react";
@@ -12,6 +14,11 @@ import styles from "./AccommodationCard.module.css";
 interface Props {
   accommodation: Accommodation;
   onViewDetails?: (id: string) => void;
+  isFavorited?: boolean;
+  onToggleFavorite?: () => void;
+  likes?: number;
+  isSaved?: boolean;
+  onSaveClick?: () => void;
 }
 
 function hashString(value: string): number {
@@ -80,6 +87,11 @@ function formatPrice(price?: number): string {
 export default function AccommodationCard({
   accommodation,
   onViewDetails,
+  isFavorited = false,
+  onToggleFavorite,
+  likes = 0,
+  isSaved = false,
+  onSaveClick,
 }: Props) {
   const {
     id,
@@ -148,12 +160,44 @@ export default function AccommodationCard({
           <Tag size={14} />
           <span>{address}</span>
         </p>
-        <p className={styles.price}>{formatPrice(price_from)}</p>
+
+        <div className={styles.cardBottom}>
+          <p className={styles.price}>{formatPrice(price_from)}</p>
+          {onToggleFavorite && (
+            <div className={styles.quickActions}>
+              <button
+                type="button"
+                className={`${styles.heartBtn} ${isFavorited ? styles.heartBtnActive : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite();
+                }}
+                aria-label={isFavorited ? "Retirer des likes" : "Liker"}
+              >
+                <Heart size={14} fill={isFavorited ? "currentColor" : "none"} />
+                <span>{likes}</span>
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.saveBtn} ${isSaved ? styles.saveBtnActive : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSaveClick?.();
+                }}
+                aria-label={isSaved ? "Déjà enregistré" : "Enregistrer"}
+                title={isSaved ? "Déjà enregistré" : "Enregistrer"}
+              >
+                <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} />
+              </button>
+            </div>
+          )}
+        </div>
 
         <button
           className={styles.cta}
           type="button"
-          onClick={() => onViewDetails?.(id)}
+          onClick={() => onViewDetails?.(String(id))}
         >
           <BedDouble size={15} />
           <span>Voir l'établissement</span>

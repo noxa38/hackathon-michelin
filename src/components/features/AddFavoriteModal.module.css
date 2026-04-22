@@ -1,0 +1,192 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.closeButton:hover {
+  color: #333;
+}
+
+.modalBody {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.selectedRestaurant {
+  margin-top: 20px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.restaurantCard {
+  border: 2px solid #f0f0f0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background: #fafafa;
+  transition: border-color 0.2s;
+}
+
+.restaurantCard:hover {
+  border-color: #d4a574;
+}
+
+.restaurantInfo h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.cuisine {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.location {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #999;
+}
+
+.stars {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.description {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.error {
+  padding: 12px 16px;
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 6px;
+  color: #c33;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.success {
+  padding: 12px 16px;
+  background-color: #efe;
+  border: 1px solid #cfc;
+  border-radius: 6px;
+  color: #3a3;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.addButton {
+  width: 100%;
+  padding: 12px 20px;
+  background-color: #d4a574;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.addButton:hover:not(:disabled) {
+  background-color: #c79663;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3);
+}
+
+.addButton:disabled {
+  background-color: #ddd;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.addButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+@media (max-width: 600px) {
+  .modalOverlay {
+    padding: 10px;
+  }
+
+  .modalContent {
+    max-height: 95vh;
+  }
+
+  .modalHeader h2 {
+    font-size: 18px;
+  }
+}

@@ -26,9 +26,20 @@ import {
   fetchAccommodationById,
   fetchAccommodations,
 } from "../services/accommodation.service";
+import {
+  getListAccommodations,
+  findOrCreateList,
+  addAccommodationToList,
+  removeAccommodationFromList,
+  getLists,
+} from "../services/list.service";
+import { getToken, getUser } from "../services/auth.service";
 import type { Accommodation } from "../types/accommodation.types";
 import AccommodationCard from "../components/features/AccommodationCard";
+import SaveToListModal from "../components/features/SaveToListModal";
 import styles from "./AccommodationsPage.module.css";
+
+const ACCOMMODATIONS_LIKED_LIST_NAME = "Hébergements likées";
 
 function normalizeForSearch(value: string | undefined | null): string {
   if (!value) return "";
@@ -37,6 +48,22 @@ function normalizeForSearch(value: string | undefined | null): string {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+}
+
+function getInitialAccommodationLikeCount(accommodation: Accommodation): number {
+  const stars = accommodation.stars ?? accommodation.rating_stars ?? 0;
+  const premiumBonus = accommodation.category?.toLowerCase().includes("palace") ? 30 : 0;
+  const popularitySeed = (Number(accommodation.id) * 19) % 90;
+  return 12 + Math.floor(stars * 20) + premiumBonus + popularitySeed;
+}
+
+function normalizeAccommodationId(value: string | number): string {
+  const rawValue = String(value)
+  return rawValue.includes('-') ? rawValue.split('-').pop() || rawValue : rawValue
+}
+
+function toAccommodationNumericId(value: string | number): number {
+  return Number(normalizeAccommodationId(value))
 }
 
 export default function AccommodationsPage() {
@@ -81,15 +108,12 @@ export default function AccommodationsPage() {
     useState<Accommodation | null>(null);
   const [reservationSubmitted, setReservationSubmitted] = useState(false);
   const [reservationForm, setReservationForm] = useState(initialReservationForm);
-  const [favoriteIds, setFavoriteIds] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = window.localStorage.getItem("accommodation-favorites");
-      return raw ? (JSON.parse(raw) as string[]) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [likesById, setLikesById] = useState<Record<number, number>>({});
+  const [savedAccommodationIds, setSavedAccommodationIds] = useState<Set<number>>(new Set());
+  const [saveTargetAccommodationId, setSaveTargetAccommodationId] = useState<number | null>(null);
+  const [saveTargetAccommodationSource, setSaveTargetAccommodationSource] = useState<"hotels" | "accommodations">("hotels");
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
   const cityRef = useRef<HTMLDivElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
   const sourceRef = useRef<HTMLDivElement>(null);
@@ -106,23 +130,46 @@ export default function AccommodationsPage() {
   const closeAllFilters = useCallback(() => setOpenMenu(null), []);
 
   useEffect(() => {
+    const token = getToken();
     fetchAccommodations()
-      .then(setAccommodations)
+      .then((loadedAccommodations) => {
+        setAccommodations(loadedAccommodations)
+        const initialLikes = loadedAccommodations.reduce<Record<number, number>>((acc, accommodation) => {
+          acc[Number(accommodation.id)] = getInitialAccommodationLikeCount(accommodation)
+          return acc
+        }, {})
+        setLikesById(initialLikes)
+      })
       .catch(() =>
         setError(
           "Impossible de charger les hébergements. Vérifiez que le serveur est démarré.",
         ),
       )
       .finally(() => setLoading(false));
-  }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      "accommodation-favorites",
-      JSON.stringify(favoriteIds),
-    );
-  }, [favoriteIds]);
+    if (token) {
+      getLists(token)
+        .then(async (lists) => {
+          const likedList = lists.find((list) => list.name === ACCOMMODATIONS_LIKED_LIST_NAME)
+          if (likedList) {
+            const likedAccommodations = await getListAccommodations(token, likedList.id).catch(() => [])
+            setFavoriteIds(likedAccommodations.map((accommodation) => normalizeAccommodationId(accommodation.id)))
+          }
+
+          const listsForSave = lists.filter((list) => list.name !== ACCOMMODATIONS_LIKED_LIST_NAME)
+          const accommodationsByList = await Promise.all(
+            listsForSave.map((list) => getListAccommodations(token, list.id).catch(() => []))
+          )
+          const ids = new Set<number>()
+          accommodationsByList.flat().forEach((accommodation) => {
+            const parsedId = toAccommodationNumericId(accommodation.id)
+            if (Number.isFinite(parsedId)) ids.add(parsedId)
+          })
+          setSavedAccommodationIds(ids)
+        })
+        .catch(() => {})
+    }
+  }, []);
 
   useEffect(() => {
     if (!openMenu) return;
@@ -321,12 +368,67 @@ export default function AccommodationsPage() {
     setDetailFlipped(false);
   }
 
-  function toggleFavorite(id: string) {
+  async function toggleFavorite(id: string) {
+    const token = getToken();
+    const user = getUser();
+    const numId = Number(id);
+    if (!token || user?.userType === 'admin') {
+      navigate('/auth?message=lists')
+      return
+    }
+
+    const isCurrentlyFavorited = favoriteIds.includes(id);
+    const previousLikes = likesById[numId] ?? 0;
+    const nextLikes = isCurrentlyFavorited
+      ? Math.max(0, previousLikes - 1)
+      : previousLikes + 1;
+
     setFavoriteIds((current) =>
-      current.includes(id)
+      isCurrentlyFavorited
         ? current.filter((favoriteId) => favoriteId !== id)
         : [...current, id],
     );
+    setLikesById((current) => ({
+      ...current,
+      [numId]: nextLikes,
+    }));
+
+    try {
+      if (isCurrentlyFavorited) {
+        const lists = await getLists(token);
+        const likedList = lists.find((l: { name: string }) => l.name === ACCOMMODATIONS_LIKED_LIST_NAME);
+        if (likedList) {
+          await removeAccommodationFromList(token, likedList.id, numId);
+        }
+      } else {
+        const likedList = await findOrCreateList(token, ACCOMMODATIONS_LIKED_LIST_NAME);
+        await addAccommodationToList(token, likedList.id, numId, 'hotels');
+      }
+    } catch {
+      // Rollback optimistic update on error
+      setFavoriteIds((current) =>
+        isCurrentlyFavorited
+          ? [...current, id]
+          : current.filter((favoriteId) => favoriteId !== id),
+      );
+      setLikesById((current) => ({
+        ...current,
+        [numId]: previousLikes,
+      }));
+    }
+  }
+
+  function handleOpenSaveModal(accommodationId: number, accommodationSource: "hotels" | "accommodations" = "hotels") {
+    const token = getToken();
+    const user = getUser();
+    if (!token || user?.userType === 'admin') {
+      navigate('/auth?message=lists')
+      return
+    }
+
+    setSaveTargetAccommodationId(accommodationId)
+    setSaveTargetAccommodationSource(accommodationSource)
+    setSaveModalOpen(true)
   }
 
   function handleReservation(accommodation: Accommodation) {
@@ -382,6 +484,27 @@ export default function AccommodationsPage() {
     minRating !== "0";
 
   return (
+    <>
+      <SaveToListModal
+        isOpen={saveModalOpen}
+        token={getToken()}
+        itemId={saveTargetAccommodationId}
+        itemType="accommodation"
+        accommodationSource={saveTargetAccommodationSource}
+        title="Enregistrer cet hébergement"
+        onClose={() => {
+          setSaveModalOpen(false)
+          setSaveTargetAccommodationId(null)
+          setSaveTargetAccommodationSource('hotels')
+        }}
+        onSaved={(savedId) => {
+          setSavedAccommodationIds((current) => {
+            const next = new Set(current)
+            next.add(savedId)
+            return next
+          })
+        }}
+      />
     <main className={styles.main}>
       <section className={styles.header}>
         <div className={styles.headerShell}>
@@ -632,6 +755,11 @@ export default function AccommodationsPage() {
                     key={accommodation.id}
                     accommodation={accommodation}
                     onViewDetails={handleViewDetails}
+                    isFavorited={favoriteIds.includes(String(accommodation.id))}
+                    onToggleFavorite={() => toggleFavorite(String(accommodation.id))}
+                    likes={likesById[Number(accommodation.id)] ?? getInitialAccommodationLikeCount(accommodation)}
+                    isSaved={savedAccommodationIds.has(Number(accommodation.id))}
+                    onSaveClick={() => handleOpenSaveModal(Number(accommodation.id), accommodation.source || 'hotels')}
                   />
                 ))}
               </section>
@@ -769,24 +897,6 @@ export default function AccommodationsPage() {
                             <CalendarCheck2 size={16} />
                             <span>Réservation</span>
                           </button>
-                          <button
-                            type="button"
-                            className={`${styles.actionButton} ${
-                              favoriteIds.includes(selectedAccommodation.id)
-                                ? styles.favoriteActive
-                                : ""
-                            }`}
-                            onClick={() =>
-                              toggleFavorite(selectedAccommodation.id)
-                            }
-                          >
-                            <Heart size={16} />
-                            <span>
-                              {favoriteIds.includes(selectedAccommodation.id)
-                                ? "Retirer des favoris"
-                                : "Ajouter aux favoris"}
-                            </span>
-                          </button>
                         </div>
                       </aside>
 
@@ -869,7 +979,7 @@ export default function AccommodationsPage() {
                           type="button"
                           className={styles.detailPageButton}
                           onClick={() =>
-                            openDetailedPage(selectedAccommodation.id)
+                            openDetailedPage(String(selectedAccommodation.id))
                           }
                         >
                           Ouvrir la fiche détaillée
@@ -990,22 +1100,6 @@ export default function AccommodationsPage() {
                         <CalendarCheck2 size={16} />
                         <span>Réservation</span>
                       </button>
-                      <button
-                        type="button"
-                        className={`${styles.actionButton} ${
-                          favoriteIds.includes(selectedAccommodation.id)
-                            ? styles.favoriteActive
-                            : ""
-                        }`}
-                        onClick={() => toggleFavorite(selectedAccommodation.id)}
-                      >
-                        <Heart size={16} />
-                        <span>
-                          {favoriteIds.includes(selectedAccommodation.id)
-                            ? "Retirer des favoris"
-                            : "Ajouter aux favoris"}
-                        </span>
-                      </button>
                     </div>
 
                     <button
@@ -1018,7 +1112,7 @@ export default function AccommodationsPage() {
                     <button
                       type="button"
                       className={styles.detailPageButton}
-                      onClick={() => openDetailedPage(selectedAccommodation.id)}
+                      onClick={() => openDetailedPage(String(selectedAccommodation.id))}
                     >
                       Ouvrir la fiche détaillée
                     </button>
@@ -1182,6 +1276,7 @@ export default function AccommodationsPage() {
         </div>
       )}
     </main>
+    </>
   );
 }
 

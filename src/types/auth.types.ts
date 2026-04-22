@@ -4,6 +4,7 @@ export interface User {
   username: string
   firstName: string
   lastName: string
+  userType?: 'individual' | 'professional' | 'admin'
   avatarUrl?: string
   bio?: string
   preferences?: Record<string, unknown>
@@ -39,6 +40,8 @@ export interface List {
   isPublic: boolean
   createdAt: string
   restaurantCount?: number
+  accommodationCount?: number
+  itemCount?: number
 }
 
 export interface ListRestaurant {

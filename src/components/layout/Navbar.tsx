@@ -1,4 +1,4 @@
-import { UserCircle, Utensils, BedDouble, Bookmark, Home, LogOut } from 'lucide-react'
+import { UserCircle, Utensils, BedDouble, Home, LogOut } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import styles from './Navbar.module.css'
@@ -17,6 +17,13 @@ export default function Navbar({ isAuthenticated = false }: Props) {
     navigate('/auth')
   }
 
+  function handleAccountClick(e: React.MouseEvent) {
+    if (!isAuthenticated) {
+      e.preventDefault()
+      navigate('/auth')
+    }
+  }
+
   return (
     <>
       {/* Barre du haut — desktop uniquement */}
@@ -27,9 +34,13 @@ export default function Navbar({ isAuthenticated = false }: Props) {
           <nav className={styles.nav} aria-label="Navigation principale">
             <Link to="/restaurants" className={`${styles.navLink} ${pathname === '/restaurants' ? styles.navLinkActive : ''}`}>Restaurants</Link>
             <Link to="/hebergements" className={`${styles.navLink} ${pathname === '/hebergements' ? styles.navLinkActive : ''}`}>Hébergements</Link>
-            {isAuthenticated && (
-              <Link to="/dashboard" className={`${styles.navLink} ${pathname === '/dashboard' ? styles.navLinkActive : ''}`}>Mes listes</Link>
-            )}
+            <Link 
+              to={isAuthenticated ? '/dashboard' : '#'}
+              onClick={handleAccountClick}
+              className={`${styles.navLink} ${pathname === '/dashboard' && isAuthenticated ? styles.navLinkActive : ''}`}
+            >
+              Mon compte
+            </Link>
           </nav>
 
           <div className={styles.actions}>
@@ -64,12 +75,12 @@ export default function Navbar({ isAuthenticated = false }: Props) {
         <Link to="/hebergements" className={`${styles.bottomItem} ${pathname === '/hebergements' ? styles.bottomItemActive : ''}`} aria-label="Hébergements">
           <BedDouble size={22} />
         </Link>
-        {isAuthenticated && (
-          <Link to="/dashboard" className={`${styles.bottomItem} ${pathname === '/dashboard' ? styles.bottomItemActive : ''}`} aria-label="Dashboard">
-            <Bookmark size={22} />
-          </Link>
-        )}
-        <Link to={isAuthenticated ? '/dashboard' : '/auth'} className={`${styles.bottomItem} ${pathname === '/dashboard' || pathname === '/auth' ? styles.bottomItemActive : ''}`} aria-label="Mon profil">
+        <Link 
+          to={isAuthenticated ? '/dashboard' : '#'}
+          onClick={handleAccountClick}
+          className={`${styles.bottomItem} ${pathname === '/dashboard' && isAuthenticated ? styles.bottomItemActive : ''}`}
+          aria-label="Mon compte"
+        >
           <UserCircle size={22} />
         </Link>
       </nav>

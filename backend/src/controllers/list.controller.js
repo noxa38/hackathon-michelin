@@ -144,3 +144,55 @@ export async function getListRestaurants(req, res) {
     res.status(500).json({ error: "Erreur lors de la récupération des restaurants" });
   }
 }
+
+export async function findOrCreate(req, res) {
+  try {
+    const userId = req.user.id;
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: "Le nom est requis" });
+    const list = await List.findOrCreateByName(userId, name);
+    return res.json(list);
+  } catch (error) {
+    console.error("Find or create list error:", error);
+    res.status(500).json({ error: "Erreur lors de la création de la liste" });
+  }
+}
+
+export async function addAccommodation(req, res) {
+  try {
+    const userId = req.user.id;
+    const listId = req.params.listId;
+    const { accommodationId, accommodationSource = "hotels" } = req.body;
+    if (!accommodationId) return res.status(400).json({ error: "ID hébergement requis" });
+    await List.addAccommodation(listId, accommodationId, userId, accommodationSource);
+    return res.json({ message: "Hébergement ajouté à la liste" });
+  } catch (error) {
+    console.error("Add accommodation error:", error);
+    res.status(500).json({ error: "Erreur lors de l'ajout de l'hébergement" });
+  }
+}
+
+export async function removeAccommodation(req, res) {
+  try {
+    const userId = req.user.id;
+    const listId = req.params.listId;
+    const accommodationId = req.params.accommodationId;
+    await List.removeAccommodation(listId, accommodationId, userId);
+    return res.json({ message: "Hébergement retiré de la liste" });
+  } catch (error) {
+    console.error("Remove accommodation error:", error);
+    res.status(500).json({ error: "Erreur lors de la suppression de l'hébergement" });
+  }
+}
+
+export async function getListAccommodations(req, res) {
+  try {
+    const userId = req.user.id;
+    const listId = req.params.listId;
+    const accommodations = await List.getAccommodations(listId, userId);
+    return res.json(accommodations);
+  } catch (error) {
+    console.error("Get list accommodations error:", error);
+    res.status(500).json({ error: "Erreur lors de la récupération des hébergements" });
+  }
+}

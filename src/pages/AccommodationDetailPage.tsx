@@ -353,11 +353,12 @@ export default function AccommodationDetailPage() {
     try {
       const raw = window.localStorage.getItem("accommodation-favorites");
       const current = raw ? (JSON.parse(raw) as string[]) : [];
-      const next = current.includes(accommodation.id)
-        ? current.filter((favoriteId) => favoriteId !== accommodation.id)
-        : [...current, accommodation.id];
+      const accommodationIdStr = String(accommodation.id);
+      const next = current.includes(accommodationIdStr)
+        ? current.filter((favoriteId) => favoriteId !== accommodationIdStr)
+        : [...current, accommodationIdStr];
       window.localStorage.setItem("accommodation-favorites", JSON.stringify(next));
-      setIsFavorite(next.includes(accommodation.id));
+      setIsFavorite(next.includes(accommodationIdStr));
     } catch {
       // no-op
     }
