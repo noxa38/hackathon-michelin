@@ -1,23 +1,55 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/layout/Navbar'
 import HomePage from './pages/HomePage'
 import RestaurantsPage from './pages/RestaurantsPage'
 import AccommodationsPage from './pages/AccommodationsPage'
 import MyListsPage from './pages/MyListsPage'
 import IntroAnimation from './components/ui/IntroAnimation'
+import AuthPage from './pages/AuthPage'
+import DashboardPage from './pages/DashboardPage'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import AccommodationsPage from './pages/AccommodationsPage'
+import MyListsPage from './pages/MyListsPage'
+import IntroAnimation from './components/ui/IntroAnimation'
 
-function App() {
+function AppContent() {
+  const { isAuthenticated, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <BrowserRouter>
+        <Navbar />
+      </BrowserRouter>
+    )
+  }
+
   return (
     <BrowserRouter>
       <IntroAnimation />
-      <Navbar />
+      <Navbar isAuthenticated={isAuthenticated} />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/restaurants" element={<RestaurantsPage />} />
         <Route path="/hebergements" element={<AccommodationsPage />} />
         <Route path="/mes-listes" element={<MyListsPage />} />
+        <Route
+          path="/auth"
+          element={isAuthenticated ? <Navigate to="/dashboard" /> : <AuthPage />}
+        />
+        <Route
+          path="/dashboard"
+          element={isAuthenticated ? <DashboardPage /> : <Navigate to="/auth" />}
+        />
       </Routes>
     </BrowserRouter>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 

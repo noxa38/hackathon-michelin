@@ -1,6 +1,5 @@
--- schema.sql — Table des restaurants Guide Michelin
+-- schema.sql — Tables du Guide Michelin
 
-DROP TABLE IF EXISTS accommodations;
 DROP TABLE IF EXISTS restaurants;
 
 CREATE TABLE restaurants (
@@ -23,6 +22,7 @@ CREATE TABLE restaurants (
   description  TEXT,
   created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+DROP TABLE IF EXISTS accommodations;
 
 CREATE TABLE accommodations (
   id         INT AUTO_INCREMENT PRIMARY KEY,

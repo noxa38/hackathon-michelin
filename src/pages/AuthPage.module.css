@@ -1,0 +1,274 @@
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-white);
+  padding: 40px 16px 96px;
+  min-height: calc(100svh - 64px);
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding: 60px 24px;
+  }
+}
+
+.container {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 32px 24px;
+  background: var(--color-white);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Tabs ──────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 8px;
+  background-color: rgba(0, 0, 0, 0.02);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+}
+
+.tab {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.tabActive {
+  background-color: var(--color-red);
+  color: #fff;
+  border: 1px solid var(--color-red);
+}
+
+/* ── Titres ────────────────────────────────────────────── */
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-black);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: rgba(0, 0, 0, 0.6);
+  margin: 0;
+}
+
+/* ── Formulaires ──────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── Groupes d'input ──────────────────────────────────── */
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  position: absolute;
+  left: 12px;
+  color: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-black);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  cursor: text;
+  pointer-events: auto;
+}
+
+.input::placeholder {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+.input:focus {
+  outline: none;
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 3px rgba(228, 0, 43, 0.1);
+}
+
+.input:hover:not(:focus) {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.eyeButton {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.eyeButton:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* ── Layout deux colonnes ──────────────────────────────── */
+.twoColumns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Boutons ──────────────────────────────────────────── */
+.submitButton {
+  padding: 12px 24px;
+  background-color: var(--color-red);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: #d63a47;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(228, 0, 43, 0.2);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.showPasswordButton {
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.showPasswordButton:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.3);
+  color: var(--color-black);
+}
+
+.forgotButton {
+  align-self: center;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  color: var(--color-red);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.forgotButton:hover {
+  text-decoration: underline;
+  color: #d63a47;
+}
+
+.backButton {
+  padding: 12px 24px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-black);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* ── Messages d'erreur ─────────────────────────────────── */
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: rgba(228, 0, 43, 0.1);
+  border: 1px solid rgba(228, 0, 43, 0.3);
+  border-radius: 8px;
+  color: var(--color-red);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
