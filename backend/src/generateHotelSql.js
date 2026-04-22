@@ -80,6 +80,7 @@ CREATE TABLE hotel_rooms (
   price_per_night  INT,
   capacity         TINYINT,
   amenities        TEXT,
+  photo_url        VARCHAR(500),
   CONSTRAINT fk_hotel FOREIGN KEY (hotel_id) REFERENCES hotels(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 `;
@@ -116,6 +117,7 @@ const insertRooms = rooms.map((r) =>
     r.price_per_night || "NULL",
     r.capacity || "NULL",
     sqlStr(r.amenities),
+    "NULL",
   ].join(", ")})`
 );
 
@@ -136,7 +138,7 @@ for (const chunk of chunks(insertHotels, 20)) {
 
 seed += "-- Hotel rooms\n";
 for (const chunk of chunks(insertRooms, 25)) {
-  seed += `INSERT INTO hotel_rooms (id, hotel_id, room_type, description, price_per_night, capacity, amenities) VALUES\n`;
+  seed += `INSERT INTO hotel_rooms (id, hotel_id, room_type, description, price_per_night, capacity, amenities, photo_url) VALUES\n`;
   seed += chunk.join(",\n") + ";\n\n";
 }
 

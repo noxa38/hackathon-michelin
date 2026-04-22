@@ -49,15 +49,15 @@ INSERT INTO restaurants (name, address, location, city, price, cuisine, longitud
 
 ('FZN by Björn Frantzén', 'Atlantis The Palm Jumeirah, Crescent Road, Dubai', 'Dubai', 'Dubai', '$$$$', 'Modern Cuisine', 55.1182319, 25.1320377, '+971501076322', 'https://guide.michelin.com/en/dubai-emirate/dubai/restaurant/fzn-by-bjorn-frantzen', 'https://www.restaurantfzn.com/', '3 Stars', 3, 0, 'Air conditioning,Car park,Counter dining,Interesting wine list,Valet parking,Wheelchair access', 'With a simple ring of a doorbell, you are transported to an elevated dining experience set in what looks like someone''s home. It starts in the Scandi-inspired sitting room for canapes and aperitifs; then, dinner takes place around an impressive open kitchen, where you are greeted by the chefs before service begins. An array of dishes showcases the blend of Asian and Scandinavian influences that make great use of the finest luxury ingredients, such as shellfish from the Norwegian Sea and turbot from Brittany. The team''s craft and precision present a superb balance of flavour and texture seen across all the plates.');
 
-INSERT INTO accommodations (name, city, category, address) VALUES
-('Hotel Le Bristol', 'Paris', 'Hôtel 5 étoiles', '112 Rue du Faubourg Saint-Honoré, Paris'),
-('Villa Copenhagen', 'Copenhagen', 'Boutique Hôtel', 'Tietgensgade 35-39, Copenhagen'),
-('Hotel Adlon Kempinski', 'Berlin', 'Hôtel de luxe', 'Unter den Linden 77, Berlin'),
-('The Savoy', 'London', 'Hôtel historique', 'Strand, London'),
-('Grand Hotel Stockholm', 'Stockholm', 'Hôtel 5 étoiles', 'Södra Blasieholmshamnen 8, Stockholm'),
-('Hotel Alfonso XIII', 'Seville', 'Palace Hôtel', 'San Fernando 2, Seville'),
-('Mandarin Oriental', 'Barcelona', 'Hôtel urbain', 'Passeig de Gràcia 38-40, Barcelona'),
-('Badrutt''s Palace Hotel', 'St. Moritz', 'Resort', 'Via Serlas 27, St. Moritz'),
-('Aman Venice', 'Venice', 'Hôtel de charme', 'Palazzo Papadopoli, Venice'),
-('Four Seasons Firenze', 'Florence', 'Hôtel jardin', 'Borgo Pinti 99, Florence'),
-('Hotel de France', 'Paris', 'Hôtel historique', '108 Rue de Richelieu, Paris');
+INSERT INTO accommodations (name, city, category, address, photo_url) VALUES
+('Hotel Le Bristol', 'Paris', 'Hôtel 5 étoiles', '112 Rue du Faubourg Saint-Honoré, Paris', 'https://images.unsplash.com/photo-1566073771259-6a8506099945'),
+('Villa Copenhagen', 'Copenhagen', 'Boutique Hôtel', 'Tietgensgade 35-39, Copenhagen', 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa'),
+('Hotel Adlon Kempinski', 'Berlin', 'Hôtel de luxe', 'Unter den Linden 77, Berlin', 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb'),
+('The Savoy', 'London', 'Hôtel historique', 'Strand, London', 'https://images.unsplash.com/photo-1564501049412-61c2a3083791'),
+('Grand Hotel Stockholm', 'Stockholm', 'Hôtel 5 étoiles', 'Södra Blasieholmshamnen 8, Stockholm', 'https://images.unsplash.com/photo-1571896349842-33c89424de2d'),
+('Hotel Alfonso XIII', 'Seville', 'Palace Hôtel', 'San Fernando 2, Seville', 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267'),
+('Mandarin Oriental', 'Barcelona', 'Hôtel urbain', 'Passeig de Gràcia 38-40, Barcelona', 'https://images.unsplash.com/photo-1590490360182-c33d57733427'),
+('Badrutt''s Palace Hotel', 'St. Moritz', 'Resort', 'Via Serlas 27, St. Moritz', 'https://images.unsplash.com/photo-1445019980597-93fa8acb246c'),
+('Aman Venice', 'Venice', 'Hôtel de charme', 'Palazzo Papadopoli, Venice', 'https://images.unsplash.com/photo-1455587734955-081b22074882'),
+('Four Seasons Firenze', 'Florence', 'Hôtel jardin', 'Borgo Pinti 99, Florence', 'https://images.unsplash.com/photo-1468824357306-a439d58ccb1c'),
+('Hotel de France', 'Paris', 'Hôtel historique', '108 Rue de Richelieu, Paris', 'https://images.unsplash.com/photo-1496417263034-38ec4f0b665a');

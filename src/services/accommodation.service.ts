@@ -24,7 +24,7 @@ export async function fetchAccommodations(
   return response.json()
 }
 
-export async function fetchAccommodationById(id: number): Promise<Accommodation> {
+export async function fetchAccommodationById(id: string): Promise<Accommodation> {
   const response = await fetch(`${API_BASE}/accommodations/${id}`)
   if (!response.ok) throw new Error('Accommodation not found')
   return response.json()

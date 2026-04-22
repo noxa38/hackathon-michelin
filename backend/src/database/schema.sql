@@ -1,5 +1,6 @@
 -- schema.sql — Tables du Guide Michelin
 
+<<<<<<< HEAD
 DROP TABLE IF EXISTS list_restaurants;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS lists;
@@ -24,6 +25,12 @@ CREATE TABLE lists (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_lists_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+=======
+DROP TABLE IF EXISTS hotel_rooms;
+DROP TABLE IF EXISTS accommodations;
+DROP TABLE IF EXISTS restaurants;
+DROP TABLE IF EXISTS hotels;
+>>>>>>> a991088 (phasna)
 
 CREATE TABLE restaurants (
   id           INT AUTO_INCREMENT PRIMARY KEY,
@@ -62,5 +69,38 @@ CREATE TABLE accommodations (
   city       VARCHAR(100),
   category   VARCHAR(100),
   address    VARCHAR(500),
+  photo_url  VARCHAR(500),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE hotels (
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  name         VARCHAR(255) NOT NULL,
+  address      VARCHAR(500),
+  city         VARCHAR(100),
+  country      VARCHAR(100),
+  latitude     DECIMAL(10, 7),
+  longitude    DECIMAL(10, 7),
+  stars        TINYINT DEFAULT 0,
+  rating_stars DECIMAL(2,1),
+  phone        VARCHAR(50),
+  description  TEXT,
+  facilities   TEXT,
+  price_from   INT,
+  image_url    VARCHAR(500),
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE hotel_rooms (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  hotel_id   INT NOT NULL,
+  room_type  VARCHAR(100) NOT NULL,
+  description TEXT,
+  price_per_night INT,
+  capacity   TINYINT,
+  amenities  TEXT,
+  photo_url  VARCHAR(500),
+  CONSTRAINT fk_hotel_rooms_hotel
+    FOREIGN KEY (hotel_id) REFERENCES hotels(id)
+    ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

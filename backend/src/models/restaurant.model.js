@@ -32,3 +32,26 @@ export async function getRestaurantById(id) {
   )
   return rows[0] ?? null
 }
+
+export async function getNearbyRestaurants(latitude, longitude, radiusKm = 20, limit = 12) {
+  const [rows] = await pool.execute(
+    `SELECT id,
+            name,
+            city,
+            latitude,
+            longitude,
+            (6371 * ACOS(
+              COS(RADIANS(?)) * COS(RADIANS(latitude)) *
+              COS(RADIANS(longitude) - RADIANS(?)) +
+              SIN(RADIANS(?)) * SIN(RADIANS(latitude))
+            )) AS distance_km
+     FROM restaurants
+     WHERE latitude IS NOT NULL
+       AND longitude IS NOT NULL
+     HAVING distance_km <= ?
+     ORDER BY distance_km ASC
+     LIMIT ?`,
+    [latitude, longitude, latitude, radiusKm, limit]
+  )
+  return rows
+}

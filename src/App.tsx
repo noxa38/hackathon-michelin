@@ -3,6 +3,7 @@ import Navbar from './components/layout/Navbar'
 import HomePage from './pages/HomePage'
 import RestaurantsPage from './pages/RestaurantsPage'
 import AccommodationsPage from './pages/AccommodationsPage'
+import AccommodationDetailPage from './pages/AccommodationDetailPage'
 import MyListsPage from './pages/MyListsPage'
 import IntroAnimation from './components/ui/IntroAnimation'
 import AuthPage from './pages/AuthPage'
@@ -24,6 +25,7 @@ function AppContent() {
         <Route path="/" element={<HomePage />} />
         <Route path="/restaurants" element={<RestaurantsPage />} />
         <Route path="/hebergements" element={<AccommodationsPage />} />
+        <Route path="/hebergements/:id" element={<AccommodationDetailPage />} />
         <Route path="/mes-listes" element={<MyListsPage />} />
         <Route
           path="/auth"

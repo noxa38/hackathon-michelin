@@ -17,3 +17,12 @@ export interface Restaurant {
   facilities: string
   description: string
 }
+
+export interface RestaurantNearby {
+  id: number
+  name: string
+  city: string
+  latitude: number
+  longitude: number
+  distance_km: number
+}

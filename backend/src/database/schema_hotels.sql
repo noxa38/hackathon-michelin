@@ -16,6 +16,7 @@ CREATE TABLE hotels (
   description  TEXT,
   facilities   TEXT,
   price_from   INT,
+  photo_url    VARCHAR(500),
   created_at   TIMESTAMP      DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -27,5 +28,6 @@ CREATE TABLE hotel_rooms (
   price_per_night  INT,
   capacity         TINYINT,
   amenities        TEXT,
+  photo_url        VARCHAR(500),
   CONSTRAINT fk_hotel FOREIGN KEY (hotel_id) REFERENCES hotels(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
