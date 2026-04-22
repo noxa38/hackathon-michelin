@@ -96,3 +96,16 @@ export function getToken(): string | null {
 export function removeToken(): void {
   localStorage.removeItem('auth_token')
 }
+
+export function saveUser(user: User): void {
+  localStorage.setItem('auth_user', JSON.stringify(user))
+}
+
+export function getUser(): User | null {
+  const user = localStorage.getItem('auth_user')
+  return user ? JSON.parse(user) : null
+}
+
+export function removeUser(): void {
+  localStorage.removeItem('auth_user')
+}

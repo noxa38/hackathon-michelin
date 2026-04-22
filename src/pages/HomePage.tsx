@@ -10,8 +10,7 @@ export default function HomePage() {
 
   function handleLocate() {
     if (!navigator.geolocation) return
-    navigator.geolocation.getCurrentPosition(position => {
-      console.log(position.coords.latitude, position.coords.longitude)
+    navigator.geolocation.getCurrentPosition(_position => {
       // TODO: fill search input with city from reverse geocoding
     })
   }
@@ -19,7 +18,6 @@ export default function HomePage() {
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     // TODO: navigate to results with query + selectedType
-    console.log({ query, selectedType })
   }
 
   return (

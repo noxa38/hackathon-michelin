@@ -1,9 +1,9 @@
-import { Router } from 'express'
-import { search, getById } from '../controllers/accommodation.controller.js'
+import express from "express";
+import * as accommodationController from "../controllers/accommodation.controller.js";
 
-const router = Router()
+const router = express.Router();
 
-router.get('/', search)
-router.get('/:id', getById)
+router.get("/", accommodationController.getAccommodations);
+router.get("/:id", accommodationController.getAccommodationById);
 
-export default router
+export default router;

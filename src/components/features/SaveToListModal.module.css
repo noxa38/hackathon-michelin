@@ -1,0 +1,135 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(10, 10, 12, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal {
+  width: min(520px, 100%);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.closeButton {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.65);
+  font-weight: 600;
+}
+
+.select,
+.input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.separator {
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.createRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.info {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.error {
+  margin: 0;
+  color: #b1001a;
+  font-size: 0.85rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.cancelButton,
+.saveButton {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cancelButton {
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: #fff;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.saveButton {
+  border: 1px solid var(--color-red);
+  background: var(--color-red);
+  color: #fff;
+}
+
+.saveButton:disabled,
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

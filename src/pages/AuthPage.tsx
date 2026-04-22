@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Mail, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import * as authService from '../services/auth.service'
 import { useAuth } from '../contexts/AuthContext'
 import styles from './AuthPage.module.css'
@@ -23,6 +23,7 @@ interface RegisterForm {
 
 export default function AuthPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login } = useAuth()
   const [mode, setMode] = useState<AuthMode>('login')
   const [showPassword, setShowPassword] = useState(false)
@@ -30,6 +31,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [forgotEmail, setForgotEmail] = useState('')
+  const [authMessage, setAuthMessage] = useState('')
 
   const [loginForm, setLoginForm] = useState<LoginForm>({
     email: '',
@@ -45,6 +47,13 @@ export default function AuthPage() {
     lastName: '',
   })
 
+  useEffect(() => {
+    const message = searchParams.get('message')
+    if (message === 'lists') {
+      setAuthMessage('Veuillez vous inscrire ou vous connecter pour accéder à vos listes de restaurants.')
+    }
+  }, [searchParams])
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -56,7 +65,8 @@ export default function AuthPage() {
         password: loginForm.password,
       })
 
-      login(response.token)
+      login(response.token, response.user)
+      navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     } finally {
@@ -79,7 +89,8 @@ export default function AuthPage() {
         lastName: registerForm.lastName,
       })
 
-      login(response.token)
+      login(response.token, response.user)
+      navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     } finally {
@@ -106,6 +117,13 @@ export default function AuthPage() {
         <div className={styles.content}>
           {!showForgotPassword ? (
             <>
+              {authMessage && (
+                <div className={styles.infoBox}>
+                  <AlertCircle size={16} />
+                  {authMessage}
+                </div>
+              )}
+
               {/* Tabs de sélection */}
               <div className={styles.tabs}>
                 <button
