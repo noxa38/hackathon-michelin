@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import restaurantRoutes from "./routes/restaurant.routes.js";
 import accommodationRoutes from "./routes/accommodation.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import listRoutes from "./routes/list.routes.js";
 
 dotenv.config();
 
@@ -13,6 +15,8 @@ app.use(express.json());
 
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/accommodations", accommodationRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/lists", listRoutes);
 
 app.get("/", (_req, res) => {
   res.json({ message: "API Michelin Guide" });

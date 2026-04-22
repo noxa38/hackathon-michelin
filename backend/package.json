@@ -14,9 +14,11 @@
   "description": "API REST - Guide Michelin",
   "dependencies": {
     "axios": "^1.15.1",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.22.2"
   },
   "devDependencies": {

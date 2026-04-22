@@ -1,9 +1,21 @@
-import { UserCircle, Utensils, BedDouble, Bookmark, Home } from 'lucide-react'
-import { Link, useLocation } from 'react-router-dom'
+import { UserCircle, Utensils, BedDouble, Bookmark, Home, LogOut } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 import styles from './Navbar.module.css'
 
-export default function Navbar() {
+interface Props {
+  isAuthenticated?: boolean
+}
+
+export default function Navbar({ isAuthenticated = false }: Props) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const { logout } = useAuth()
+
+  function handleLogout() {
+    logout()
+    navigate('/auth')
+  }
 
   return (
     <>
@@ -15,12 +27,29 @@ export default function Navbar() {
           <nav className={styles.nav} aria-label="Navigation principale">
             <Link to="/restaurants" className={`${styles.navLink} ${pathname === '/restaurants' ? styles.navLinkActive : ''}`}>Restaurants</Link>
             <Link to="/hebergements" className={`${styles.navLink} ${pathname === '/hebergements' ? styles.navLinkActive : ''}`}>Hébergements</Link>
-            <Link to="/mes-listes" className={`${styles.navLink} ${pathname === '/mes-listes' ? styles.navLinkActive : ''}`}>Mes listes</Link>
+            {isAuthenticated && (
+              <Link to="/dashboard" className={`${styles.navLink} ${pathname === '/dashboard' ? styles.navLinkActive : ''}`}>Mes listes</Link>
+            )}
           </nav>
 
-          <button className={styles.profileButton} aria-label="Mon profil">
-            <UserCircle size={26} />
-          </button>
+          <div className={styles.actions}>
+            {isAuthenticated ? (
+              <>
+                {pathname !== '/dashboard' && (
+                  <Link to="/dashboard" className={styles.profileButton} aria-label="Mon profil">
+                    <UserCircle size={26} />
+                  </Link>
+                )}
+                <button className={styles.logoutButton} onClick={handleLogout} aria-label="Déconnexion">
+                  <LogOut size={20} />
+                </button>
+              </>
+            ) : (
+              <Link to="/auth" className={styles.loginButton}>
+                Connexion
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
@@ -35,13 +64,16 @@ export default function Navbar() {
         <Link to="/hebergements" className={`${styles.bottomItem} ${pathname === '/hebergements' ? styles.bottomItemActive : ''}`} aria-label="Hébergements">
           <BedDouble size={22} />
         </Link>
-        <Link to="/mes-listes" className={`${styles.bottomItem} ${pathname === '/mes-listes' ? styles.bottomItemActive : ''}`} aria-label="Mes listes">
-          <Bookmark size={22} />
-        </Link>
-        <Link to="/profil" className={`${styles.bottomItem} ${pathname === '/profil' ? styles.bottomItemActive : ''}`} aria-label="Mon profil">
+        {isAuthenticated && (
+          <Link to="/dashboard" className={`${styles.bottomItem} ${pathname === '/dashboard' ? styles.bottomItemActive : ''}`} aria-label="Dashboard">
+            <Bookmark size={22} />
+          </Link>
+        )}
+        <Link to={isAuthenticated ? '/dashboard' : '/auth'} className={`${styles.bottomItem} ${pathname === '/dashboard' || pathname === '/auth' ? styles.bottomItemActive : ''}`} aria-label="Mon profil">
           <UserCircle size={22} />
         </Link>
       </nav>
     </>
   )
 }
+
