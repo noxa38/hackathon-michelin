@@ -1,5 +1,24 @@
 import pool from '../config/db.js'
 
+async function attachPhotos(restaurants) {
+  if (!restaurants.length) return restaurants
+  const ids = restaurants.map(r => r.id)
+  const placeholders = ids.map(() => '?').join(',')
+  const [photos] = await pool.execute(
+    `SELECT restaurant_id, url, caption, position
+     FROM restaurant_photos
+     WHERE restaurant_id IN (${placeholders})
+     ORDER BY restaurant_id, position ASC`,
+    ids
+  )
+  const photoMap = {}
+  for (const p of photos) {
+    if (!photoMap[p.restaurant_id]) photoMap[p.restaurant_id] = []
+    photoMap[p.restaurant_id].push({ url: p.url, caption: p.caption, position: p.position })
+  }
+  return restaurants.map(r => ({ ...r, photos: photoMap[r.id] ?? [] }))
+}
+
 export async function getAllRestaurants() {
   const [rows] = await pool.execute(
     `SELECT id, name, address, location, city, price, cuisine, longitude, latitude,
@@ -8,7 +27,7 @@ export async function getAllRestaurants() {
      FROM restaurants
      ORDER BY stars DESC, name ASC`
   )
-  return rows
+  return attachPhotos(rows)
 }
 
 export async function searchRestaurants(query, city) {
@@ -22,7 +41,7 @@ export async function searchRestaurants(query, city) {
      LIMIT 20`,
     [like, like, city, city]
   )
-  return rows
+  return attachPhotos(rows)
 }
 
 export async function getRestaurantById(id) {
@@ -30,7 +49,9 @@ export async function getRestaurantById(id) {
     'SELECT * FROM restaurants WHERE id = ?',
     [id]
   )
-  return rows[0] ?? null
+  if (!rows[0]) return null
+  const [withPhotos] = await attachPhotos([rows[0]])
+  return withPhotos
 }
 
 export async function getNearbyRestaurants(latitude, longitude, radiusKm = 20, limit = 12) {

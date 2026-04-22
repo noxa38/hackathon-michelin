@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Heart, Bookmark, CalendarCheck, Leaf, MapPin, Clock } from 'lucide-react'
+import { Heart, Bookmark, CalendarCheck, Leaf, MapPin, Clock, Images } from 'lucide-react'
 import type { Restaurant } from '../../types/restaurant.types'
 import styles from './RestaurantCard.module.css'
+import PhotoCarousel from '../ui/PhotoCarousel'
 
 interface Props {
   restaurant: Restaurant
@@ -40,8 +41,11 @@ export default function RestaurantCard({ restaurant }: Props) {
   const [liked, setLiked] = useState(false)
   const [saved, setSaved] = useState(false)
   const [likes, setLikes] = useState(() => Math.floor(Math.random() * 300 + 20))
+  const [carouselOpen, setCarouselOpen] = useState(false)
 
-  const { name, address, price, cuisine, description, stars, award, green_star } = restaurant
+  const { name, address, price, cuisine, description, stars, award, green_star, photos } = restaurant
+  const hasPhotos = photos && photos.length > 0
+  const coverPhoto = hasPhotos ? photos[0].url : null
 
   function handleLike(e: React.MouseEvent) {
     e.stopPropagation()
@@ -54,7 +58,13 @@ export default function RestaurantCard({ restaurant }: Props) {
     setSaved(s => !s)
   }
 
+  function handlePhotoClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (hasPhotos) setCarouselOpen(true)
+  }
+
   return (
+    <>
     <div
       className={styles.cardOuter}
       onClick={() => setFlipped(f => !f)}
@@ -68,17 +78,31 @@ export default function RestaurantCard({ restaurant }: Props) {
         {/* ── FACE AVANT ── */}
         <div className={styles.cardFront}>
           <div
-            className={styles.photoArea}
-            style={{ background: `linear-gradient(145deg, ${getCardColor(cuisine)}, #000)` }}
+            className={`${styles.photoArea} ${hasPhotos ? styles.photoAreaClickable : ''}`}
+            style={coverPhoto
+              ? { backgroundImage: `url(${coverPhoto})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+              : { background: `linear-gradient(145deg, ${getCardColor(cuisine)}, #000)` }
+            }
+            onClick={handlePhotoClick}
+            role={hasPhotos ? 'button' : undefined}
+            aria-label={hasPhotos ? `Voir les photos de ${name}` : undefined}
           >
-            <span className={styles.photoInitial}>{name.charAt(0)}</span>
+            {!coverPhoto && <span className={styles.photoInitial}>{name.charAt(0)}</span>}
             {green_star === 1 && (
               <span className={styles.greenStarBadge}>
                 <Leaf size={11} />
                 Étoile Verte
               </span>
             )}
-            <div className={styles.photoHint}>Cliquer pour plus de détails</div>
+            {hasPhotos && (
+              <div className={styles.photoCountBadge}>
+                <Images size={12} />
+                <span>{photos!.length}</span>
+              </div>
+            )}
+            <div className={styles.photoHint}>
+              {hasPhotos ? 'Cliquer pour voir les photos' : 'Cliquer pour plus de détails'}
+            </div>
           </div>
 
           <div className={styles.frontContent}>
@@ -148,6 +172,15 @@ export default function RestaurantCard({ restaurant }: Props) {
 
       </div>
     </div>
+
+    {carouselOpen && hasPhotos && (
+      <PhotoCarousel
+        photos={photos!}
+        restaurantName={name}
+        onClose={() => setCarouselOpen(false)}
+      />
+    )}
+  </>
   )
 }
 

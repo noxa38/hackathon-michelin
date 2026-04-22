@@ -56,6 +56,40 @@
   overflow: hidden;
 }
 
+.photoAreaClickable {
+  cursor: zoom-in;
+}
+
+.photoAreaClickable::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.2s ease;
+}
+
+.photoAreaClickable:hover::after {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+/* ── Badge nombre de photos ──────────────────────────────── */
+.photoCountBadge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.72rem;
+  font-weight: 600;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .photoInitial {
   font-size: 88px;
   font-weight: 900;
