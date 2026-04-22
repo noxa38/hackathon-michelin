@@ -1,3 +1,9 @@
+export interface RestaurantPhoto {
+  url: string
+  caption?: string
+  position: number
+}
+
 export interface Restaurant {
   id: number
   name: string
@@ -16,6 +22,8 @@ export interface Restaurant {
   green_star: number
   facilities: string
   description: string
+  opening_hours?: string
+  photos?: RestaurantPhoto[]
 }
 
 export interface RestaurantNearby {

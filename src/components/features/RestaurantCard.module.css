@@ -1,6 +1,6 @@
 /* ── Outer container (perspective) ────────────────────────── */
 .cardOuter {
-  height: 480px;
+  height: 560px;
   perspective: 1200px;
   cursor: pointer;
   outline: none;
@@ -56,6 +56,40 @@
   overflow: hidden;
 }
 
+.photoAreaClickable {
+  cursor: zoom-in;
+}
+
+.photoAreaClickable::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.2s ease;
+}
+
+.photoAreaClickable:hover::after {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+/* ── Badge nombre de photos ──────────────────────────────── */
+.photoCountBadge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.72rem;
+  font-weight: 600;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .photoInitial {
   font-size: 88px;
   font-weight: 900;
@@ -100,6 +134,48 @@
 }
 
 /* ── Badge award ─────────────────────────────────────────── */
+
+/* Ligne conteneur (étoiles + étoile verte) */
+.awardRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 30px;
+}
+
+/* Groupe des étoiles Michelin */
+.starsRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Image étoile Michelin rouge */
+.starImg {
+  height: 18px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.12));
+}
+
+/* Image Bib Gourmand */
+.bibImg {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.12));
+}
+
+/* Image étoile verte */
+.greenStarImg {
+  height: 16px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
+}
+
+/* Fallback texte pour "Selected Restaurants" */
 .award {
   display: inline-flex;
   align-items: center;
@@ -111,21 +187,6 @@
   letter-spacing: 0.4px;
   white-space: nowrap;
   flex-shrink: 0;
-}
-
-.award3 {
-  background: var(--color-gold);
-  color: var(--color-white);
-}
-
-.award2 {
-  background: #9ca3af;
-  color: var(--color-white);
-}
-
-.award1 {
-  background: #f3f4f6;
-  color: var(--color-black);
 }
 
 .awardSelected {
@@ -253,7 +314,7 @@
   font-size: 0.78rem;
   line-height: 1.65;
   color: #4b5563;
-  margin: 14px 0;
+  margin: 14px 0 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #e5e7eb transparent;
@@ -268,65 +329,154 @@
   border-radius: 4px;
 }
 
+/* ── Horaires d'ouverture (fallback texte) ─────────────────── */
+.backHours {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 9px 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+  font-size: 0.76rem;
+  color: #374151;
+  line-height: 1.5;
+  flex-shrink: 0;
+  margin-top: 10px;
+  border: 1px solid #f0f0f0;
+}
+
+.backHoursIcon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--color-red);
+}
+
+/* ── Schedule par jour ─────────────────────────────────────── */
+.scheduleSection {
+  flex-shrink: 0;
+  margin-top: 10px;
+}
+
+.scheduleHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #9ca3af;
+  margin-bottom: 5px;
+}
+
+.scheduleIcon {
+  color: var(--color-red);
+  flex-shrink: 0;
+}
+
+.scheduleGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scheduleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-radius: 7px;
+  background: #f9fafb;
+  border: 1px solid transparent;
+}
+
+.scheduleRowToday {
+  background: #fff5f5;
+  border-color: var(--color-red);
+}
+
+.scheduleRowToday .scheduleDayName {
+  color: var(--color-red);
+  font-weight: 800;
+}
+
+.scheduleRowToday .scheduleDayHours {
+  color: var(--color-red);
+  font-weight: 700;
+}
+
+.scheduleRowClosed {
+  opacity: 0.38;
+}
+
+.scheduleDayName {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-black);
+  min-width: 28px;
+  flex-shrink: 0;
+}
+
+.scheduleDayHours {
+  font-size: 0.7rem;
+  color: #4b5563;
+  text-align: right;
+}
+
 /* ── Boutons back ────────────────────────────────────────── */
 .backActions {
   display: flex;
+  align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .btnReserve,
-.btnFav,
 .btnSave {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 14px;
-  height: 40px;
-  border-radius: 100px;
   border: none;
   font-family: var(--font-family);
-  font-size: 0.83rem;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
-  white-space: nowrap;
-  flex: 1;
 }
 
 .btnReserve {
+  flex: 1;
+  gap: 6px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 13px;
   background: var(--color-red);
   color: var(--color-white);
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .btnReserve:hover {
   background: #c0001e;
 }
 
-.btnFav {
-  border: 1px solid #e5e7eb;
-  background: transparent;
-  color: #374151;
-}
-
-.btnFav:hover,
-.btnFav.likedActive {
-  border-color: var(--color-red);
-  color: var(--color-red);
-  background: #fff5f6;
-}
-
 .btnSave {
-  border: 1px solid #e5e7eb;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  border: 1.5px solid #d1d5db !important;
   background: transparent;
   color: #374151;
 }
 
-.btnSave:hover,
-.btnSave.savedActive {
-  border-color: var(--color-black);
+.btnSave:hover {
+  border-color: var(--color-black) !important;
   color: var(--color-black);
   background: #f9fafb;
+}
+
+.btnSave.savedActive {
+  border-color: var(--color-black) !important;
+  color: var(--color-black);
+  background: #f3f4f6;
 }

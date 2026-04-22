@@ -1,6 +1,5 @@
 -- schema.sql — Tables du Guide Michelin
 
-<<<<<<< HEAD
 DROP TABLE IF EXISTS list_restaurants;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS lists;
@@ -25,12 +24,7 @@ CREATE TABLE lists (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_lists_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-=======
-DROP TABLE IF EXISTS hotel_rooms;
-DROP TABLE IF EXISTS accommodations;
-DROP TABLE IF EXISTS restaurants;
-DROP TABLE IF EXISTS hotels;
->>>>>>> a991088 (phasna)
+
 
 CREATE TABLE restaurants (
   id           INT AUTO_INCREMENT PRIMARY KEY,
@@ -48,10 +42,12 @@ CREATE TABLE restaurants (
   award        VARCHAR(100),
   stars        TINYINT      DEFAULT 0,
   green_star   TINYINT(1)   DEFAULT 0,
-  facilities   TEXT,
-  description  TEXT,
-  created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+  facilities     TEXT,
+  description    TEXT,
+  opening_hours  VARCHAR(255) DEFAULT NULL,
+  created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 CREATE TABLE list_restaurants (
   id            INT AUTO_INCREMENT PRIMARY KEY,
@@ -62,6 +58,21 @@ CREATE TABLE list_restaurants (
   CONSTRAINT fk_list_restaurants_restaurant FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE,
   UNIQUE KEY unique_list_restaurant (list_id, restaurant_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS restaurant_photos;
+
+CREATE TABLE restaurant_photos (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  restaurant_id INT          NOT NULL,
+  url           VARCHAR(500) NOT NULL,
+  caption       VARCHAR(255),
+  position      TINYINT      DEFAULT 0,
+  created_at    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_restaurant_photo FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TABLE IF EXISTS accommodations;
+
 
 CREATE TABLE accommodations (
   id         INT AUTO_INCREMENT PRIMARY KEY,
