@@ -22,6 +22,7 @@ export interface Restaurant {
   green_star: number
   facilities: string
   description: string
+  opening_hours?: string
   photos?: RestaurantPhoto[]
 }
 

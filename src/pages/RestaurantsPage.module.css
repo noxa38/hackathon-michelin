@@ -42,51 +42,264 @@
   margin-top: 8px;
 }
 
-/* ── Filtres ──────────────────────────────────────────────── */
-.filters {
+/* ── Barre de filtres globale ─────────────────────────────── */
+.filterBar {
   display: flex;
+  align-items: center;
   gap: 8px;
-  padding: 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  padding: 14px 16px;
   border-bottom: 1px solid #f0f0f0;
-}
-
-.filters::-webkit-scrollbar {
-  display: none;
+  background: #fafafa;
+  flex-wrap: wrap;
 }
 
 @media (min-width: 768px) {
-  .filters {
-    padding: 20px 24px;
-  }
+  .filterBar { padding: 14px 24px; }
 }
-
 @media (min-width: 1024px) {
-  .filters {
-    padding: 20px 40px;
-  }
+  .filterBar { padding: 14px 40px; }
 }
 
-.filterBtn {
-  white-space: nowrap;
-  padding: 8px 18px;
-  border-radius: 100px;
-  border: 1px solid var(--color-border);
+/* ── Recherche ────────────────────────────────────────────── */
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 180px;
+  height: 44px;
+  padding: 5px 5px 5px 14px;
+  border-radius: 18px;
+  background: var(--color-white);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  border: none;
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--color-gray);
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
   background: transparent;
   font-family: var(--font-family);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
+  font-size: 0.95rem;
   color: var(--color-black);
-  min-height: 44px;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  outline: none;
 }
 
-.filterBtn.active {
-  background: var(--color-black);
-  color: var(--color-white);
+.searchInput::placeholder {
+  color: var(--color-gray);
+}
+
+.searchClear {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-gray);
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+}
+
+.searchClear:hover { color: var(--color-black); }
+
+/* ── Dropdown wrapper ─────────────────────────────────────── */
+.dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Bouton déclencheur — style pill page d'accueil */
+.dropdownTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 13px;
+  border: 1.5px solid #d1d5db;
+  background: var(--color-white);
+  font-family: var(--font-family);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-black);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.dropdownTrigger:hover {
   border-color: var(--color-black);
+}
+
+/* Actif : rouge comme les pills de la homepage */
+.dropdownActive {
+  border-color: var(--color-red) !important;
+  background: var(--color-red) !important;
+  color: var(--color-white) !important;
+}
+
+/* Badge compteur */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 100px;
+  background: var(--color-white);
+  color: var(--color-red);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dropdownTrigger:not(.dropdownActive) .badge {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+/* Chevron animé */
+.chevron {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+/* Menu déroulant */
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  min-width: 220px;
+  background: var(--color-white);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+  padding: 6px 0;
+  animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px) }
+  to   { opacity: 1; transform: translateY(0) }
+}
+
+.dropdownMenuScrollable {
+  max-height: 280px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+/* Item checkbox */
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--color-black);
+  transition: background 0.1s ease;
+}
+
+.dropdownItem:hover {
+  background: #f9fafb;
+}
+
+.dropdownItemChecked {
+  background: #fff5f5;
+  font-weight: 600;
+}
+
+.checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-red);
+  flex-shrink: 0;
+}
+
+.dropdownItemContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.miniStars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.miniStarImg {
+  height: 13px;
+  width: auto;
+  object-fit: contain;
+}
+
+.miniDistinctionImg {
+  height: 16px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Label prix dans le dropdown */
+.priceLabel {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
+/* Bouton réinitialiser dans le menu */
+.clearOption {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  border-top: 1px solid #f3f4f6;
+  background: none;
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  color: #6b7280;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.clearOption:hover { color: var(--color-red); }
+
+/* Bouton tout effacer */
+.resetAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 13px;
+  border: 1.5px solid #d1d5db;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.resetAll:hover {
+  color: var(--color-red);
+  border-color: var(--color-red);
 }
 
 /* ── Grille ───────────────────────────────────────────────── */

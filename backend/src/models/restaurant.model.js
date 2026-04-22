@@ -23,7 +23,7 @@ export async function getAllRestaurants() {
   const [rows] = await pool.execute(
     `SELECT id, name, address, location, city, price, cuisine, longitude, latitude,
             phone_number, michelin_url, website_url, award, stars, green_star,
-            facilities, description
+            facilities, description, opening_hours
      FROM restaurants
      ORDER BY stars DESC, name ASC`
   )
@@ -34,7 +34,7 @@ export async function searchRestaurants(query, city) {
   const like = `%${query}%`
   const [rows] = await pool.execute(
     `SELECT id, name, address, location, city, price, cuisine,
-            michelin_url, award, stars, green_star
+            michelin_url, award, stars, green_star, opening_hours
      FROM restaurants
      WHERE (name LIKE ? OR city LIKE ?)
        AND (? = '' OR city = ?)

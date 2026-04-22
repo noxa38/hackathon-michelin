@@ -42,9 +42,10 @@ CREATE TABLE restaurants (
   award        VARCHAR(100),
   stars        TINYINT      DEFAULT 0,
   green_star   TINYINT(1)   DEFAULT 0,
-  facilities   TEXT,
-  description  TEXT,
-  created_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+  facilities     TEXT,
+  description    TEXT,
+  opening_hours  VARCHAR(255) DEFAULT NULL,
+  created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
