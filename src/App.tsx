@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/layout/Navbar'
 import HomePage from './pages/HomePage'
+import SearchResultsPage from './pages/SearchResultsPage'
 import RestaurantsPage from './pages/RestaurantsPage'
 import AccommodationsPage from './pages/AccommodationsPage'
 import AccommodationDetailPage from './pages/AccommodationDetailPage'
@@ -23,6 +24,7 @@ function AppContent() {
       <Navbar isAuthenticated={isAuthenticated} />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/resultats" element={<SearchResultsPage />} />
         <Route path="/restaurants" element={<RestaurantsPage />} />
         <Route path="/hebergements" element={<AccommodationsPage />} />
         <Route path="/hebergements/:id" element={<AccommodationDetailPage />} />

@@ -1,25 +1,35 @@
-import { useState } from 'react'
-import { Navigation, Search, Utensils, BedDouble, LayoutGrid } from 'lucide-react'
-import styles from './HomePage.module.css'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Navigation,
+  Search,
+  Utensils,
+  BedDouble,
+  LayoutGrid,
+} from "lucide-react";
+import styles from "./HomePage.module.css";
 
-type PlaceType = 'restaurant' | 'accommodation' | 'all'
+type PlaceType = "restaurant" | "accommodation" | "all";
 
 export default function HomePage() {
-  const [query, setQuery] = useState('')
-  const [selectedType, setSelectedType] = useState<PlaceType>('restaurant')
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [selectedType, setSelectedType] = useState<PlaceType>("restaurant");
 
   function handleLocate() {
-    if (!navigator.geolocation) return
-    navigator.geolocation.getCurrentPosition(position => {
-      console.log(position.coords.latitude, position.coords.longitude)
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((position) => {
+      console.log(position.coords.latitude, position.coords.longitude);
       // TODO: fill search input with city from reverse geocoding
-    })
+    });
   }
 
   function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
-    // TODO: navigate to results with query + selectedType
-    console.log({ query, selectedType })
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("q", query.trim());
+    params.set("type", selectedType);
+    navigate(`/resultats?${params.toString()}`);
   }
 
   return (
@@ -27,7 +37,9 @@ export default function HomePage() {
       <section className={styles.hero}>
         <div className={styles.content}>
           <h1 className={styles.title}>
-            Trouvez les meilleures<br />tables et adresses
+            Trouvez les meilleures
+            <br />
+            tables et adresses
           </h1>
 
           <form className={styles.searchForm} onSubmit={handleSearch}>
@@ -35,27 +47,27 @@ export default function HomePage() {
             <div className={styles.typeFilters}>
               <button
                 type="button"
-                className={`${styles.typeButton} ${selectedType === 'restaurant' ? styles.active : ''}`}
-                onClick={() => setSelectedType('restaurant')}
-                aria-pressed={selectedType === 'restaurant'}
+                className={`${styles.typeButton} ${selectedType === "restaurant" ? styles.active : ""}`}
+                onClick={() => setSelectedType("restaurant")}
+                aria-pressed={selectedType === "restaurant"}
               >
                 <Utensils size={14} aria-hidden />
                 Restaurant
               </button>
               <button
                 type="button"
-                className={`${styles.typeButton} ${selectedType === 'accommodation' ? styles.active : ''}`}
-                onClick={() => setSelectedType('accommodation')}
-                aria-pressed={selectedType === 'accommodation'}
+                className={`${styles.typeButton} ${selectedType === "accommodation" ? styles.active : ""}`}
+                onClick={() => setSelectedType("accommodation")}
+                aria-pressed={selectedType === "accommodation"}
               >
                 <BedDouble size={14} aria-hidden />
                 Hébergement
               </button>
               <button
                 type="button"
-                className={`${styles.typeButton} ${selectedType === 'all' ? styles.active : ''}`}
-                onClick={() => setSelectedType('all')}
-                aria-pressed={selectedType === 'all'}
+                className={`${styles.typeButton} ${selectedType === "all" ? styles.active : ""}`}
+                onClick={() => setSelectedType("all")}
+                aria-pressed={selectedType === "all"}
               >
                 <LayoutGrid size={14} aria-hidden />
                 Tout
@@ -72,13 +84,13 @@ export default function HomePage() {
                 className={styles.searchInput}
                 placeholder="Restaurant, ville, adresse…"
                 value={query}
-                onChange={e => setQuery(e.target.value)}
+                onChange={(e) => setQuery(e.target.value)}
                 aria-label="Recherche"
               />
               <div className={styles.searchButtonWrapper}>
                 <button type="submit" className={styles.searchButton}>
                   <Search size={16} aria-hidden />
-                  <span>Rechercher</span>
+                  <span className={styles.searchButtonLabel}>Rechercher</span>
                 </button>
               </div>
             </div>
@@ -96,5 +108,5 @@ export default function HomePage() {
         </div>
       </section>
     </main>
-  )
+  );
 }

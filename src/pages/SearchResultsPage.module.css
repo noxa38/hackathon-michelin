@@ -1,0 +1,287 @@
+.main {
+  min-height: 100svh;
+  padding: 110px 16px 40px;
+  background: linear-gradient(180deg, #f8f9fb 0%, #ffffff 100%);
+}
+
+.header {
+  max-width: 1100px;
+  margin: 0 auto 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  color: #6c7280;
+  font-weight: 700;
+}
+
+.title {
+  font-size: 1.75rem;
+  color: #151515;
+  line-height: 1.2;
+}
+
+.subtitle {
+  color: #545d6b;
+  max-width: 650px;
+}
+
+.preferenceFilters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.preferenceField {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.preferenceField select {
+  height: 36px;
+  border: 1px solid #d4d9e2;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0 10px;
+  font-size: 0.85rem;
+  color: #1f2937;
+}
+
+.filterSwitch {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filterButton {
+  border: 1px solid #d4d8df;
+  background: #fff;
+  color: #323a46;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.filterButtonActive {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: #fff;
+}
+
+.refreshButton {
+  border: 1px solid #d9dfe8;
+  background: #f4f6fa;
+  color: #1f2937;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.refreshButton:hover {
+  background: #e9edf4;
+}
+
+.refreshButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  background: #f3f4f6;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+
+.preferenceModal {
+  width: min(760px, 100%);
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
+}
+
+.modalTitle {
+  font-size: 1.1rem;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.modalActions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modalCancel,
+.modalApply {
+  border: none;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.modalCancel {
+  background: #eceff4;
+  color: #1f2937;
+}
+
+.modalApply {
+  background: var(--color-red);
+  color: #fff;
+}
+
+.results {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
+}
+
+.resultBlock {
+  background: #fff;
+  border: 1px solid #eceff3;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 24px rgba(25, 25, 25, 0.05);
+}
+
+.blockHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.blockHeader h2 {
+  font-size: 1.08rem;
+  color: #1c2533;
+}
+
+.blockHeader a {
+  color: var(--color-red);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.cardGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.card {
+  border: 1px solid #edf0f4;
+  border-radius: 14px;
+  background: #fcfcfd;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.media {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #e8ecf2;
+}
+
+.media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cardBody {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card h3 {
+  font-size: 1rem;
+  color: #1a1a1a;
+}
+
+.card p {
+  color: #525d6b;
+  font-size: 0.9rem;
+}
+
+.distance {
+  color: #2f4f7a;
+  font-weight: 600;
+}
+
+.card span {
+  margin-top: 4px;
+  font-size: 0.84rem;
+  color: #101010;
+  font-weight: 700;
+}
+
+.detailButton {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  background: var(--color-red);
+  color: #fff;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.detailButton:hover {
+  background: #c90025;
+}
+
+.state,
+.error,
+.empty {
+  color: #4f5868;
+  font-size: 0.95rem;
+}
+
+.error {
+  color: #ab102d;
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding: 128px 24px 56px;
+  }
+
+  .title {
+    font-size: 2.2rem;
+  }
+}

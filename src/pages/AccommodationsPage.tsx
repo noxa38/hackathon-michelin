@@ -7,7 +7,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   CalendarCheck2,
   ChevronDown,
@@ -40,6 +40,8 @@ function normalizeForSearch(value: string | undefined | null): string {
 }
 
 export default function AccommodationsPage() {
+  const [searchParams] = useSearchParams();
+  const initialQuery = searchParams.get("q")?.trim() ?? "";
   const ITEMS_PER_PAGE = 9;
   const initialReservationForm = {
     fullName: "",
@@ -63,7 +65,7 @@ export default function AccommodationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [cityFilters, setCityFilters] = useState<string[]>([]);
   const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
   const [sourceFilters, setSourceFilters] = useState<string[]>([]);

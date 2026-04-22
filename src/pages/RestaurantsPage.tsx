@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Search, ChevronDown, X, Utensils, Award, Coins, Globe, ConciergeBell } from 'lucide-react'
 import { fetchAllRestaurants } from '../services/restaurant.service'
 import RestaurantCard from '../components/features/RestaurantCard'
@@ -67,10 +68,12 @@ function useClickOutside(
 type OpenMenu = 'distinction' | 'cuisine' | 'price' | 'country' | 'facility' | null
 
 export default function RestaurantsPage() {
+  const [searchParams] = useSearchParams()
+  const initialQuery = searchParams.get('q')?.trim() ?? ''
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialQuery)
   const [distinctionFilters, setDistinctionFilters] = useState<DistinctionKey[]>([])
   const [cuisineFilters, setCuisineFilters] = useState<string[]>([])
   const [priceFilters, setPriceFilters] = useState<string[]>([])
