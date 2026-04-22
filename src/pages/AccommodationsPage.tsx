@@ -1,7 +1,16 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CalendarCheck2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Database,
@@ -9,7 +18,6 @@ import {
   MapPin,
   Phone,
   Search,
-  SlidersHorizontal,
   Star,
   Tags,
   X,
@@ -56,10 +64,13 @@ export default function AccommodationsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState("");
-  const [city, setCity] = useState("");
-  const [category, setCategory] = useState("all");
-  const [source, setSource] = useState("all");
+  const [cityFilters, setCityFilters] = useState<string[]>([]);
+  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
+  const [sourceFilters, setSourceFilters] = useState<string[]>([]);
   const [minRating, setMinRating] = useState("0");
+  const [openMenu, setOpenMenu] = useState<
+    "city" | "category" | "source" | "rating" | null
+  >(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAccommodation, setSelectedAccommodation] =
     useState<Accommodation | null>(null);
@@ -79,6 +90,20 @@ export default function AccommodationsPage() {
       return [];
     }
   });
+  const cityRef = useRef<HTMLDivElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const sourceRef = useRef<HTMLDivElement>(null);
+  const ratingRef = useRef<HTMLDivElement>(null);
+  const menuRefs = useMemo(
+    () => ({
+      city: cityRef,
+      category: categoryRef,
+      source: sourceRef,
+      rating: ratingRef,
+    }),
+    [],
+  );
+  const closeAllFilters = useCallback(() => setOpenMenu(null), []);
 
   useEffect(() => {
     fetchAccommodations()
@@ -98,6 +123,22 @@ export default function AccommodationsPage() {
       JSON.stringify(favoriteIds),
     );
   }, [favoriteIds]);
+
+  useEffect(() => {
+    if (!openMenu) return;
+    const activeMenu = openMenu;
+    function handleOutsideClick(event: MouseEvent) {
+      const activeRef = menuRefs[activeMenu];
+      if (
+        activeRef?.current &&
+        !activeRef.current.contains(event.target as Node)
+      ) {
+        closeAllFilters();
+      }
+    }
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [closeAllFilters, menuRefs, openMenu]);
 
   const isAnyModalOpen = useMemo(
     () =>
@@ -187,11 +228,20 @@ export default function AccommodationsPage() {
       queryTokens.length === 0 ||
       queryTokens.every((token) => searchableText.includes(token));
     const matchesCity =
-      !city || normalizeForSearch(a.city) === normalizeForSearch(city);
+      cityFilters.length === 0 ||
+      cityFilters.some(
+        (cityName) =>
+          normalizeForSearch(a.city) === normalizeForSearch(cityName),
+      );
     const matchesCategory =
-      category === "all" ||
-      normalizeForSearch(a.category) === normalizeForSearch(category);
-    const matchesSource = source === "all" || a.source === source;
+      categoryFilters.length === 0 ||
+      categoryFilters.some(
+        (categoryName) =>
+          normalizeForSearch(a.category) === normalizeForSearch(categoryName),
+      );
+    const matchesSource =
+      sourceFilters.length === 0 ||
+      sourceFilters.some((sourceName) => a.source === sourceName);
     const currentRating = a.rating_stars ?? a.stars ?? 0;
     const matchesRating = currentRating >= Number(minRating);
 
@@ -234,7 +284,7 @@ export default function AccommodationsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [query, city, category, source, minRating]);
+  }, [query, cityFilters, categoryFilters, sourceFilters, minRating]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -302,11 +352,34 @@ export default function AccommodationsPage() {
 
   function resetFilters() {
     setQuery("");
-    setCity("");
-    setCategory("all");
-    setSource("all");
+    setCityFilters([]);
+    setCategoryFilters([]);
+    setSourceFilters([]);
     setMinRating("0");
+    closeAllFilters();
   }
+
+  function toggleDropdown(
+    target: "city" | "category" | "source" | "rating",
+  ) {
+    setOpenMenu((current) => (current === target ? null : target));
+  }
+
+  function makeToggle<T>(setter: React.Dispatch<React.SetStateAction<T[]>>) {
+    return (value: T) =>
+      setter((current) =>
+        current.includes(value)
+          ? current.filter((item) => item !== value)
+          : [...current, value],
+      );
+  }
+
+  const hasFilters =
+    query.trim().length > 0 ||
+    cityFilters.length > 0 ||
+    categoryFilters.length > 0 ||
+    sourceFilters.length > 0 ||
+    minRating !== "0";
 
   return (
     <main className={styles.main}>
@@ -359,110 +432,163 @@ export default function AccommodationsPage() {
         </div>
       </section>
 
-      <section className={styles.toolbar}>
-        <div className={styles.toolbarHeader}>
-          <p className={styles.toolbarTitle}>
-            <SlidersHorizontal size={15} />
-            Filtres avancés
-          </p>
-          <button
-            type="button"
-            className={styles.resetFiltersButton}
-            onClick={resetFilters}
-          >
-            <X size={14} />
-            Réinitialiser
-          </button>
+      <div className={styles.filterBar}>
+        <div className={styles.searchBar}>
+          <Search size={15} className={styles.searchIcon} />
+          <input
+            className={styles.searchInput}
+            type="text"
+            placeholder="Nom, ville, catégorie..."
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label="Rechercher un hébergement"
+          />
+          {query && (
+            <button
+              className={styles.searchClear}
+              onClick={() => setQuery("")}
+              aria-label="Effacer"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
 
-        <label className={styles.searchWrap}>
-          <Search size={16} />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher un hébergement..."
-            aria-label="Recherche d'hébergements"
-          />
-        </label>
-
-        <label className={styles.filterWrap}>
-          <span className={styles.filterLabel}>
-            <MapPin size={14} />
-            Ville
-          </span>
-          <select
-            className={styles.select}
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            aria-label="Filtrer par ville"
-          >
-            <option value="">Toutes les villes</option>
-            {cities.filter(Boolean).map((cityName) => (
-              <option key={cityName} value={cityName}>
-                {cityName}
-              </option>
+        <DropdownFilter
+          ref={cityRef}
+          icon={<MapPin size={14} />}
+          label="Ville"
+          count={cityFilters.length}
+          isOpen={openMenu === "city"}
+          onToggle={() => toggleDropdown("city")}
+          onClear={() => setCityFilters([])}
+          scrollable
+        >
+          {cities
+            .filter(Boolean)
+            .map((cityName) => (
+              <label
+                key={cityName}
+                className={`${styles.dropdownItem} ${
+                  cityFilters.includes(cityName) ? styles.dropdownItemChecked : ""
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  className={styles.checkbox}
+                  checked={cityFilters.includes(cityName)}
+                  onChange={() => makeToggle(setCityFilters)(cityName)}
+                />
+                <span>{cityName}</span>
+              </label>
             ))}
-          </select>
-        </label>
+        </DropdownFilter>
 
-        <label className={styles.filterWrap}>
-          <span className={styles.filterLabel}>
-            <Tags size={14} />
-            Catégorie
-          </span>
-          <select
-            className={styles.select}
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            aria-label="Filtrer par catégorie"
-          >
-            <option value="all">Toutes les catégories</option>
-            {categories
-              .filter((c) => c !== "all")
-              .map((categoryName) => (
-                <option key={categoryName} value={categoryName}>
-                  {categoryName}
-                </option>
-              ))}
-          </select>
-        </label>
+        <DropdownFilter
+          ref={categoryRef}
+          icon={<Tags size={14} />}
+          label="Catégorie"
+          count={categoryFilters.length}
+          isOpen={openMenu === "category"}
+          onToggle={() => toggleDropdown("category")}
+          onClear={() => setCategoryFilters([])}
+          scrollable
+        >
+          {categories
+            .filter((value) => value !== "all")
+            .map((categoryName) => (
+              <label
+                key={categoryName}
+                className={`${styles.dropdownItem} ${
+                  categoryFilters.includes(categoryName)
+                    ? styles.dropdownItemChecked
+                    : ""
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  className={styles.checkbox}
+                  checked={categoryFilters.includes(categoryName)}
+                  onChange={() => makeToggle(setCategoryFilters)(categoryName)}
+                />
+                <span>{categoryName}</span>
+              </label>
+            ))}
+        </DropdownFilter>
 
-        <label className={styles.filterWrap}>
-          <span className={styles.filterLabel}>
-            <Database size={14} />
-            Source
-          </span>
-          <select
-            className={styles.select}
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-            aria-label="Filtrer par source"
-          >
-            <option value="all">Toutes les sources</option>
-            <option value="hotels">Base hotels</option>
-            <option value="accommodations">Seed accommodations</option>
-          </select>
-        </label>
+        <DropdownFilter
+          ref={sourceRef}
+          icon={<Database size={14} />}
+          label="Source"
+          count={sourceFilters.length}
+          isOpen={openMenu === "source"}
+          onToggle={() => toggleDropdown("source")}
+          onClear={() => setSourceFilters([])}
+        >
+          {[
+            { value: "hotels", label: "Base hotels" },
+            { value: "accommodations", label: "Seed accommodations" },
+          ].map((sourceOption) => (
+            <label
+              key={sourceOption.value}
+              className={`${styles.dropdownItem} ${
+                sourceFilters.includes(sourceOption.value)
+                  ? styles.dropdownItemChecked
+                  : ""
+              }`}
+            >
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={sourceFilters.includes(sourceOption.value)}
+                onChange={() => makeToggle(setSourceFilters)(sourceOption.value)}
+              />
+              <span>{sourceOption.label}</span>
+            </label>
+          ))}
+        </DropdownFilter>
 
-        <label className={styles.filterWrap}>
-          <span className={styles.filterLabel}>
-            <Star size={14} />
-            Note minimale
-          </span>
-          <select
-            className={styles.select}
-            value={minRating}
-            onChange={(e) => setMinRating(e.target.value)}
-            aria-label="Filtrer par note minimale"
-          >
-            <option value="0">Toutes les notes</option>
-            <option value="3">3+ étoiles</option>
-            <option value="4">4+ étoiles</option>
-            <option value="5">5 étoiles</option>
-          </select>
-        </label>
-      </section>
+        <DropdownFilter
+          ref={ratingRef}
+          icon={<Star size={14} />}
+          label="Note"
+          count={minRating !== "0" ? 1 : 0}
+          isOpen={openMenu === "rating"}
+          onToggle={() => toggleDropdown("rating")}
+          onClear={() => setMinRating("0")}
+        >
+          {[
+            { value: "3", label: "3+ étoiles" },
+            { value: "4", label: "4+ étoiles" },
+            { value: "5", label: "5 étoiles" },
+          ].map((ratingOption) => (
+            <label
+              key={ratingOption.value}
+              className={`${styles.dropdownItem} ${
+                minRating === ratingOption.value ? styles.dropdownItemChecked : ""
+              }`}
+            >
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={minRating === ratingOption.value}
+                onChange={() =>
+                  setMinRating((current) =>
+                    current === ratingOption.value ? "0" : ratingOption.value,
+                  )
+                }
+              />
+              <span>{ratingOption.label}</span>
+            </label>
+          ))}
+        </DropdownFilter>
+
+        {hasFilters && (
+          <button className={styles.resetAll} onClick={resetFilters}>
+            <X size={13} /> Tout effacer
+          </button>
+        )}
+      </div>
 
       {loading && (
         <div className={styles.state}>
@@ -1058,3 +1184,56 @@ export default function AccommodationsPage() {
     </main>
   );
 }
+
+interface DropdownFilterProps {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+  isOpen: boolean;
+  onToggle: () => void;
+  onClear: () => void;
+  scrollable?: boolean;
+  children: React.ReactNode;
+}
+
+const DropdownFilter = forwardRef<HTMLDivElement, DropdownFilterProps>(
+  (
+    { icon, label, count, isOpen, onToggle, onClear, scrollable, children },
+    ref,
+  ) => (
+    <div className={styles.dropdown} ref={ref}>
+      <button
+        type="button"
+        className={`${styles.dropdownTrigger} ${
+          count > 0 ? styles.dropdownActive : ""
+        }`}
+        onClick={onToggle}
+      >
+        {icon}
+        <span>{label}</span>
+        {count > 0 && <span className={styles.badge}>{count}</span>}
+        <ChevronDown
+          size={13}
+          className={`${styles.chevron} ${isOpen ? styles.chevronUp : ""}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          className={`${styles.dropdownMenu} ${
+            scrollable ? styles.dropdownMenuScrollable : ""
+          }`}
+        >
+          {children}
+          {count > 0 && (
+            <button className={styles.clearOption} onClick={onClear}>
+              <X size={11} /> Réinitialiser
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  ),
+);
+
+DropdownFilter.displayName = "DropdownFilter";

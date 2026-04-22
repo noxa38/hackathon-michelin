@@ -38,6 +38,14 @@ function extractCountry(location: string): string {
   return parts[parts.length - 1].trim()
 }
 
+function getInitialLikeCount(restaurant: Restaurant): number {
+  const starsBonus = restaurant.stars * 70
+  const greenStarBonus = restaurant.green_star === 1 ? 25 : 0
+  const bibBonus = restaurant.award.toLowerCase().includes('bib') || restaurant.award.toLowerCase().includes('gourmand') ? 20 : 0
+  const popularitySeed = (restaurant.id * 37) % 120
+  return 20 + starsBonus + greenStarBonus + bibBonus + popularitySeed
+}
+
 function useClickOutside(
   refs: Record<string, React.RefObject<HTMLElement | null>>,
   openMenu: string | null,
@@ -69,6 +77,7 @@ export default function RestaurantsPage() {
   const [countryFilters, setCountryFilters] = useState<string[]>([])
   const [facilityFilters, setFacilityFilters] = useState<string[]>([])
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null)
+  const [likesById, setLikesById] = useState<Record<number, number>>({})
 
   const distinctionRef = useRef<HTMLDivElement>(null)
   const cuisineRef     = useRef<HTMLDivElement>(null)
@@ -93,7 +102,14 @@ export default function RestaurantsPage() {
 
   useEffect(() => {
     fetchAllRestaurants()
-      .then(setRestaurants)
+      .then(data => {
+        setRestaurants(data)
+        const initialLikes = data.reduce<Record<number, number>>((acc, restaurant) => {
+          acc[restaurant.id] = getInitialLikeCount(restaurant)
+          return acc
+        }, {})
+        setLikesById(initialLikes)
+      })
       .catch(() => setError('Impossible de charger les restaurants. Vérifiez que le serveur est démarré.'))
       .finally(() => setLoading(false))
   }, [])
@@ -109,6 +125,43 @@ export default function RestaurantsPage() {
     restaurants.forEach(r => { if (r.location) set.add(extractCountry(r.location)) })
     return Array.from(set).sort()
   }, [restaurants])
+
+  const destinationsCount = useMemo(() => countryOptions.length, [countryOptions])
+
+  const starredCount = useMemo(
+    () => restaurants.filter(restaurant => restaurant.stars >= 1).length,
+    [restaurants]
+  )
+
+  const greenStarCount = useMemo(
+    () => restaurants.filter(restaurant => restaurant.green_star === 1).length,
+    [restaurants]
+  )
+
+  const topLikedRestaurant = useMemo(() => {
+    const withPhotos = restaurants.filter(r => (r.photos?.length ?? 0) > 0)
+    if (withPhotos.length === 0) return null
+    return withPhotos.reduce((best, current) => {
+      const bestLikes = likesById[best.id] ?? 0
+      const currentLikes = likesById[current.id] ?? 0
+      return currentLikes > bestLikes ? current : best
+    })
+  }, [restaurants, likesById])
+
+  const heroPhoto = useMemo(
+    () => topLikedRestaurant?.photos?.[0]?.url || 'https://picsum.photos/seed/michelin-restaurant-hero/1200/900',
+    [topLikedRestaurant]
+  )
+
+  const handleLikeChange = useCallback((restaurantId: number, nextLiked: boolean) => {
+    setLikesById(prev => {
+      const currentLikes = prev[restaurantId] ?? 0
+      return {
+        ...prev,
+        [restaurantId]: nextLiked ? currentLikes + 1 : Math.max(0, currentLikes - 1),
+      }
+    })
+  }, [])
 
   const filtered = useMemo(() => {
     return restaurants.filter(r => {
@@ -159,10 +212,51 @@ export default function RestaurantsPage() {
   return (
     <main className={styles.main}>
       <section className={styles.header}>
-        <h1 className={styles.title}>Restaurants</h1>
-        {!loading && !error && (
-          <p className={styles.subtitle}>{restaurants.length} établissements · {filtered.length} résultat{filtered.length !== 1 ? 's' : ''}</p>
-        )}
+        <div className={styles.headerShell}>
+          <div className={styles.headerContent}>
+            <span className={styles.kicker}>Selection gastronomique</span>
+            <h1 className={styles.title}>Restaurants</h1>
+            <p className={styles.lead}>
+              Des tables d'exception pour vivre l'experience Michelin dans les plus belles destinations.
+            </p>
+            {!loading && !error && (
+              <>
+                <p className={styles.subtitle}>
+                  <span className={styles.subtitleValue}>{restaurants.length}</span>
+                  <span>
+                    établissements · {filtered.length} résultat{filtered.length !== 1 ? 's' : ''}
+                  </span>
+                </p>
+                <div className={styles.headerStats}>
+                  <p className={styles.statCard}>
+                    <span className={styles.statValue}>{destinationsCount}</span>
+                    <span className={styles.statLabel}>destinations</span>
+                  </p>
+                  <p className={styles.statCard}>
+                    <span className={styles.statValue}>{starredCount}</span>
+                    <span className={styles.statLabel}>restaurants étoilés</span>
+                  </p>
+                  <p className={styles.statCard}>
+                    <span className={styles.statValue}>{greenStarCount}</span>
+                    <span className={styles.statLabel}>étoiles vertes</span>
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className={styles.headerGallery} aria-hidden="true">
+            <div className={styles.headerPhotoCard}>
+              <img
+                className={styles.headerPhoto}
+                src={heroPhoto}
+                alt=""
+                loading="lazy"
+              />
+              <span className={styles.galleryBadge}>Restaurant le plus liké</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <div className={styles.filterBar}>
@@ -303,7 +397,12 @@ export default function RestaurantsPage() {
           ) : (
             <div className={styles.grid}>
               {filtered.map(restaurant => (
-                <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+                <RestaurantCard
+                  key={restaurant.id}
+                  restaurant={restaurant}
+                  likes={likesById[restaurant.id] ?? getInitialLikeCount(restaurant)}
+                  onLikeChange={handleLikeChange}
+                />
               ))}
             </div>
           )}

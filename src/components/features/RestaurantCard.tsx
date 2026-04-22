@@ -6,6 +6,8 @@ import PhotoCarousel from '../ui/PhotoCarousel'
 
 interface Props {
   restaurant: Restaurant
+  likes: number
+  onLikeChange: (restaurantId: number, nextLiked: boolean) => void
 }
 
 const CUISINE_COLORS: [string, string][] = [
@@ -50,11 +52,10 @@ function AwardBadge({ stars, award, green_star }: { stars: number; award: string
   )
 }
 
-export default function RestaurantCard({ restaurant }: Props) {
+export default function RestaurantCard({ restaurant, likes, onLikeChange }: Props) {
   const [flipped, setFlipped] = useState(false)
   const [liked, setLiked] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [likes, setLikes] = useState(() => Math.floor(Math.random() * 300 + 20))
   const [carouselOpen, setCarouselOpen] = useState(false)
 
   const { name, address, price, cuisine, description, opening_hours, stars, award, green_star, photos } = restaurant
@@ -63,8 +64,11 @@ export default function RestaurantCard({ restaurant }: Props) {
 
   function handleLike(e: React.MouseEvent) {
     e.stopPropagation()
-    setLikes(l => liked ? l - 1 : l + 1)
-    setLiked(l => !l)
+    setLiked(current => {
+      const nextLiked = !current
+      onLikeChange(restaurant.id, nextLiked)
+      return nextLiked
+    })
   }
 
   function handleSave(e: React.MouseEvent) {

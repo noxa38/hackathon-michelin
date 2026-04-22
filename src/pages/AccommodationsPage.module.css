@@ -1,7 +1,7 @@
 .main {
   flex: 1;
   padding-bottom: 72px;
-  background: #f8fafc;
+  background: #ffffff;
 }
 
 .header {
@@ -19,7 +19,7 @@
 .headerContent {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(155deg, #ffffff 0%, #f8fafc 100%);
+  background: #ffffff;
   border: 1px solid #dbe4ef;
   border-radius: 20px;
   padding: 20px 18px;
@@ -27,19 +27,7 @@
 }
 
 .headerContent::after {
-  content: "";
-  position: absolute;
-  width: 170px;
-  height: 170px;
-  top: -62px;
-  right: -58px;
-  border-radius: 999px;
-  background: radial-gradient(
-    circle,
-    rgba(226, 0, 26, 0.14) 0%,
-    rgba(226, 0, 26, 0) 70%
-  );
-  pointer-events: none;
+  content: none;
 }
 
 .kicker {
@@ -48,7 +36,7 @@
   min-height: 24px;
   border-radius: 999px;
   border: 1px solid #dbe4ef;
-  background: #f8fafc;
+  background: #ffffff;
   color: #475569;
   font-size: 0.68rem;
   text-transform: uppercase;
@@ -83,7 +71,7 @@
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid #dbe4ef;
-  background: #f8fafc;
+  background: #ffffff;
   color: #334155;
   font-size: 0.84rem;
   font-weight: 600;
@@ -112,7 +100,7 @@
 .statCard {
   border: 1px solid #dbe4ef;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.9);
+  background: #ffffff;
   min-height: 62px;
   padding: 8px 10px;
   display: flex;
@@ -198,8 +186,236 @@
   padding: 14px;
   border: 1px solid #e2e8f0;
   border-radius: 18px;
-  background: linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
+  background: #ffffff;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.filterBar {
+  width: min(1200px, 100%);
+  margin: 16px auto 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  flex-wrap: wrap;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 180px;
+  height: 44px;
+  padding: 5px 5px 5px 14px;
+  border-radius: 18px;
+  background: var(--color-white);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: #64748b;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 0.95rem;
+  color: #0f172a;
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: #94a3b8;
+}
+
+.searchClear {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+}
+
+.searchClear:hover {
+  color: #0f172a;
+}
+
+.dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dropdownTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 13px;
+  border: 1.5px solid #d1d5db;
+  background: var(--color-white);
+  font-family: var(--font-family);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.dropdownTrigger:hover {
+  border-color: #0f172a;
+}
+
+.dropdownActive {
+  border-color: var(--color-red) !important;
+  background: var(--color-red) !important;
+  color: var(--color-white) !important;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 100px;
+  background: var(--color-white);
+  color: var(--color-red);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dropdownTrigger:not(.dropdownActive) .badge {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+.chevron {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chevronUp {
+  transform: rotate(180deg);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  min-width: 220px;
+  background: var(--color-white);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  padding: 6px 0;
+  animation: dropIn 0.15s ease;
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownMenuScrollable {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #0f172a;
+  transition: background 0.1s ease;
+}
+
+.dropdownItem:hover {
+  background: #f9fafb;
+}
+
+.dropdownItemChecked {
+  background: #fff5f5;
+  font-weight: 600;
+}
+
+.checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-red);
+  flex-shrink: 0;
+}
+
+.clearOption {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  border-top: 1px solid #f3f4f6;
+  background: none;
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  color: #6b7280;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.clearOption:hover {
+  color: var(--color-red);
+}
+
+.resetAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 13px;
+  border: 1.5px solid #d1d5db;
+  background: transparent;
+  font-family: var(--font-family);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.resetAll:hover {
+  color: var(--color-red);
+  border-color: var(--color-red);
 }
 
 .toolbarHeader {
@@ -975,6 +1191,10 @@
     padding: 16px;
   }
 
+  .filterBar {
+    padding: 14px 16px;
+  }
+
   .grid {
     padding: 0 24px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1004,6 +1224,11 @@
   .toolbar {
     margin-top: 18px;
     padding: 18px;
+  }
+
+  .filterBar {
+    margin-top: 18px;
+    padding: 14px 18px;
   }
 
   .grid {
