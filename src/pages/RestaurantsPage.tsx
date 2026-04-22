@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, ChevronDown, X, Utensils, Award, Coins, Globe, ConciergeBell } from 'lucide-react'
+import { Search, ChevronDown, ChevronLeft, ChevronRight, X, Utensils, Award, Coins, Globe, ConciergeBell } from 'lucide-react'
 import { fetchAllRestaurants } from '../services/restaurant.service'
 import RestaurantCard from '../components/features/RestaurantCard'
 import type { Restaurant } from '../types/restaurant.types'
@@ -68,6 +68,7 @@ function useClickOutside(
 type OpenMenu = 'distinction' | 'cuisine' | 'price' | 'country' | 'facility' | null
 
 export default function RestaurantsPage() {
+  const ITEMS_PER_PAGE = 9
   const [searchParams] = useSearchParams()
   const initialQuery = searchParams.get('q')?.trim() ?? ''
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
@@ -80,6 +81,7 @@ export default function RestaurantsPage() {
   const [countryFilters, setCountryFilters] = useState<string[]>([])
   const [facilityFilters, setFacilityFilters] = useState<string[]>([])
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null)
+  const [currentPage, setCurrentPage] = useState(1)
   const [likesById, setLikesById] = useState<Record<number, number>>({})
 
   const distinctionRef = useRef<HTMLDivElement>(null)
@@ -200,6 +202,41 @@ export default function RestaurantsPage() {
       return true
     })
   }, [restaurants, distinctionFilters, cuisineFilters, priceFilters, countryFilters, facilityFilters, search])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  const paginatedRestaurants = useMemo(
+    () =>
+      filtered.slice(
+        (safeCurrentPage - 1) * ITEMS_PER_PAGE,
+        safeCurrentPage * ITEMS_PER_PAGE
+      ),
+    [filtered, safeCurrentPage]
+  )
+
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1)
+    }
+
+    let start = Math.max(1, safeCurrentPage - 2)
+    let end = Math.min(totalPages, safeCurrentPage + 2)
+
+    if (start === 1) end = 5
+    if (end === totalPages) start = totalPages - 4
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index)
+  }, [safeCurrentPage, totalPages])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, distinctionFilters, cuisineFilters, priceFilters, countryFilters, facilityFilters])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
 
   function makeToggle<T>(setter: React.Dispatch<React.SetStateAction<T[]>>) {
     return (v: T) => setter(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])
@@ -398,16 +435,58 @@ export default function RestaurantsPage() {
           {filtered.length === 0 ? (
             <p className={styles.empty}>Aucun restaurant pour ces filtres.</p>
           ) : (
-            <div className={styles.grid}>
-              {filtered.map(restaurant => (
-                <RestaurantCard
-                  key={restaurant.id}
-                  restaurant={restaurant}
-                  likes={likesById[restaurant.id] ?? getInitialLikeCount(restaurant)}
-                  onLikeChange={handleLikeChange}
-                />
-              ))}
-            </div>
+            <>
+              <div className={styles.grid}>
+                {paginatedRestaurants.map(restaurant => (
+                  <RestaurantCard
+                    key={restaurant.id}
+                    restaurant={restaurant}
+                    likes={likesById[restaurant.id] ?? getInitialLikeCount(restaurant)}
+                    onLikeChange={handleLikeChange}
+                  />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <nav className={styles.pagination} aria-label="Pagination des restaurants">
+                  <button
+                    type="button"
+                    className={styles.paginationButton}
+                    onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                    disabled={safeCurrentPage === 1}
+                    aria-label="Page précédente"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  <div className={styles.paginationPages}>
+                    {visiblePages.map(pageNumber => (
+                      <button
+                        key={pageNumber}
+                        type="button"
+                        className={`${styles.paginationButton} ${
+                          pageNumber === safeCurrentPage ? styles.paginationButtonActive : ''
+                        }`}
+                        onClick={() => setCurrentPage(pageNumber)}
+                        aria-current={pageNumber === safeCurrentPage ? 'page' : undefined}
+                      >
+                        {pageNumber}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className={styles.paginationButton}
+                    onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                    disabled={safeCurrentPage === totalPages}
+                    aria-label="Page suivante"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </nav>
+              )}
+            </>
           )}
         </>
       )}
