@@ -8,11 +8,25 @@ export async function register(payload: RegisterPayload): Promise<AuthResponse> 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+  
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error || 'Registration failed')
+    const text = await response.text()
+    try {
+      const error = JSON.parse(text)
+      throw new Error(error.error || 'Registration failed')
+    } catch (e) {
+      throw new Error(`Registration failed with status ${response.status}: ${text}`)
+    }
   }
-  return response.json()
+  
+  const text = await response.text()
+  
+  try {
+    const result = JSON.parse(text)
+    return result
+  } catch (e) {
+    throw new Error('Invalid JSON response from server')
+  }
 }
 
 export async function login(payload: LoginPayload): Promise<AuthResponse> {
@@ -21,11 +35,25 @@ export async function login(payload: LoginPayload): Promise<AuthResponse> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+  
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.error || 'Login failed')
+    const text = await response.text()
+    try {
+      const error = JSON.parse(text)
+      throw new Error(error.error || 'Login failed')
+    } catch (e) {
+      throw new Error(`Login failed with status ${response.status}: ${text}`)
+    }
   }
-  return response.json()
+  
+  const text = await response.text()
+  
+  try {
+    const result = JSON.parse(text)
+    return result
+  } catch (e) {
+    throw new Error('Invalid JSON response from server')
+  }
 }
 
 export async function getProfile(token: string): Promise<User> {

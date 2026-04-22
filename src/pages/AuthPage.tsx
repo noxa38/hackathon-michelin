@@ -57,7 +57,6 @@ export default function AuthPage() {
       })
 
       login(response.token)
-      navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     } finally {
@@ -81,7 +80,6 @@ export default function AuthPage() {
       })
 
       login(response.token)
-      navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     } finally {

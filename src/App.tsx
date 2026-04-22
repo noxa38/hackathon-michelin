@@ -8,23 +8,16 @@ import IntroAnimation from './components/ui/IntroAnimation'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
-import AccommodationsPage from './pages/AccommodationsPage'
-import MyListsPage from './pages/MyListsPage'
-import IntroAnimation from './components/ui/IntroAnimation'
 
 function AppContent() {
   const { isAuthenticated, loading } = useAuth()
 
   if (loading) {
-    return (
-      <BrowserRouter>
-        <Navbar />
-      </BrowserRouter>
-    )
+    return <Navbar />
   }
 
   return (
-    <BrowserRouter>
+    <>
       <IntroAnimation />
       <Navbar isAuthenticated={isAuthenticated} />
       <Routes>
@@ -41,15 +34,17 @@ function AppContent() {
           element={isAuthenticated ? <DashboardPage /> : <Navigate to="/auth" />}
         />
       </Routes>
-    </BrowserRouter>
+    </>
   )
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

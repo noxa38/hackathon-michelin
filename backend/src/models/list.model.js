@@ -9,7 +9,7 @@ class List {
          LEFT JOIN list_restaurants lr ON l.id = lr.list_id
          WHERE l.user_id = ?
          GROUP BY l.id
-         ORDER BY l.updated_at DESC`,
+         ORDER BY l.created_at DESC`,
         [userId]
       );
       return rows || [];
@@ -34,11 +34,11 @@ class List {
     }
   }
 
-  static async create(userId, name, description = "", icon = "bookmark", color = "#e63946") {
+  static async create(userId, name, description = "") {
     try {
       const result = await db.execute(
-        "INSERT INTO lists (user_id, name, description, icon, color) VALUES (?, ?, ?, ?, ?)",
-        [userId, name, description, icon, color]
+        "INSERT INTO lists (user_id, name, description) VALUES (?, ?, ?)",
+        [userId, name, description]
       );
       return result[0];
     } catch (err) {

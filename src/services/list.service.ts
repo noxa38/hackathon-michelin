@@ -6,8 +6,14 @@ export async function getLists(token: string): Promise<List[]> {
   const response = await fetch(`${API_BASE}/lists`, {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!response.ok) throw new Error('Failed to fetch lists')
-  return response.json()
+  
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error('Failed to fetch lists: ' + text)
+  }
+  
+  const text = await response.text()
+  return JSON.parse(text)
 }
 
 export async function getList(token: string, id: number): Promise<List> {

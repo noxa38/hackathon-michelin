@@ -6,13 +6,9 @@ export async function searchAccommodations(query, city) {
     `SELECT id,
             name,
             city,
-            CASE
-              WHEN stars >= 4 THEN 'Hôtel de luxe'
-              WHEN stars = 3 THEN 'Hôtel haut de gamme'
-              ELSE 'Hôtel'
-            END AS category,
+            category,
             address
-     FROM hotels
+     FROM accommodations
      WHERE (name LIKE ? OR city LIKE ? OR address LIKE ?)
        AND (? = '' OR city = ?)
      LIMIT 50`,
@@ -26,19 +22,10 @@ export async function getAccommodationById(id) {
     `SELECT id,
             name,
             city,
-            CASE
-              WHEN stars >= 4 THEN 'Hôtel de luxe'
-              WHEN stars = 3 THEN 'Hôtel haut de gamme'
-              ELSE 'Hôtel'
-            END AS category,
+            category,
             address,
-            country,
-            stars,
-            phone,
-            description,
-            facilities,
-            price_from
-     FROM hotels
+            created_at
+     FROM accommodations
      WHERE id = ?`,
     [id]
   )
