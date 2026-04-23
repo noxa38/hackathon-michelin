@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
-import { Search, ChevronDown, X, Utensils, Award, Coins, Globe, ConciergeBell } from 'lucide-react'
+import { Search, ChevronDown, X, Utensils, Award, Coins, Globe, ConciergeBell, Heart } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { fetchAllRestaurants } from '../services/restaurant.service'
 import { findOrCreateList, addRestaurantToList, removeRestaurantFromList, getListRestaurants, getLists } from '../services/list.service'
@@ -37,6 +37,129 @@ const FACILITY_OPTIONS = [
   { value: 'Wheelchair access',    label: 'Accès PMR' },
   { value: 'Garden or park',       label: 'Jardin / Parc' },
   { value: 'Air conditioning',     label: 'Climatisation' },
+]
+
+const TOP_LIKED_SELECTION = [
+  {
+    id: 1,
+    name: 'Maison Aurora',
+    city: 'Lyon',
+    cuisine: 'Cuisine francaise creative',
+    price: '€€€€',
+    stars: 3,
+    likes: 1284,
+    photo: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 2,
+    name: 'Atelier du Levant',
+    city: 'Paris',
+    cuisine: 'Cuisine japonaise contemporaine',
+    price: '€€€',
+    stars: 2,
+    likes: 1072,
+    photo: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 3,
+    name: 'Le Jardin des Brumes',
+    city: 'Annecy',
+    cuisine: 'Cuisine alpine et locale',
+    price: '€€€',
+    stars: 1,
+    likes: 964,
+    photo: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 4,
+    name: 'Orizon Mare',
+    city: 'Biarritz',
+    cuisine: 'Cuisine marine moderne',
+    price: '€€€€',
+    stars: 2,
+    likes: 889,
+    photo: 'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 5,
+    name: 'Braise et Rosée',
+    city: 'Bordeaux',
+    cuisine: 'Cuisine du terroir revisitee',
+    price: '€€€',
+    stars: 1,
+    likes: 841,
+    photo: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 6,
+    name: 'Sillage',
+    city: 'Nice',
+    cuisine: 'Cuisine mediterraneenne fine',
+    price: '€€€€',
+    stars: 2,
+    likes: 804,
+    photo: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 7,
+    name: 'L Atelier des Vignes',
+    city: 'Reims',
+    cuisine: 'Cuisine francaise et champenoise',
+    price: '€€€',
+    stars: 1,
+    likes: 771,
+    photo: 'https://images.unsplash.com/photo-1592861956120-e524fc739696?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 8,
+    name: 'Noctis',
+    city: 'Lille',
+    cuisine: 'Cuisine nordique creative',
+    price: '€€€',
+    stars: 1,
+    likes: 739,
+    photo: 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 9,
+    name: 'Plein Sud',
+    city: 'Marseille',
+    cuisine: 'Cuisine provencale contemporaine',
+    price: '€€€€',
+    stars: 2,
+    likes: 715,
+    photo: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 10,
+    name: 'Origine 27',
+    city: 'Strasbourg',
+    cuisine: 'Cuisine alsacienne elegante',
+    price: '€€€',
+    stars: 1,
+    likes: 692,
+    photo: 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 11,
+    name: 'Rive Claire',
+    city: 'Nantes',
+    cuisine: 'Cuisine iodée et vegetale',
+    price: '€€€',
+    stars: 1,
+    likes: 664,
+    photo: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=1200&h=900&fit=crop',
+  },
+  {
+    id: 12,
+    name: 'Mont Echo',
+    city: 'Chamonix',
+    cuisine: 'Cuisine alpine contemporaine',
+    price: '€€€€',
+    stars: 2,
+    likes: 643,
+    photo: 'https://images.unsplash.com/photo-1541544741938-0af808871cc0?w=1200&h=900&fit=crop',
+  },
 ]
 
 function extractCountry(location: string): string {
@@ -171,21 +294,6 @@ export default function RestaurantsPage() {
     [restaurants]
   )
 
-  const topLikedRestaurant = useMemo(() => {
-    const withPhotos = restaurants.filter(r => (r.photos?.length ?? 0) > 0)
-    if (withPhotos.length === 0) return null
-    return withPhotos.reduce((best, current) => {
-      const bestLikes = likesById[best.id] ?? 0
-      const currentLikes = likesById[current.id] ?? 0
-      return currentLikes > bestLikes ? current : best
-    })
-  }, [restaurants, likesById])
-
-  const heroPhoto = useMemo(
-    () => topLikedRestaurant?.photos?.[0]?.url || 'https://picsum.photos/seed/michelin-restaurant-hero/1200/900',
-    [topLikedRestaurant]
-  )
-
   const handleLikeChange = useCallback((restaurantId: number, nextLiked: boolean) => {
     const token = getToken()
     const user = getUser()
@@ -303,7 +411,6 @@ export default function RestaurantsPage() {
       <section className={styles.header}>
         <div className={styles.headerShell}>
           <div className={styles.headerContent}>
-            <span className={styles.kicker}>Selection gastronomique</span>
             <h1 className={styles.title}>Restaurants</h1>
             <p className={styles.lead}>
               Des tables d'exception pour vivre l'experience Michelin dans les plus belles destinations.
@@ -312,9 +419,7 @@ export default function RestaurantsPage() {
               <>
                 <p className={styles.subtitle}>
                   <span className={styles.subtitleValue}>{restaurants.length}</span>
-                  <span>
-                    établissements · {filtered.length} résultat{filtered.length !== 1 ? 's' : ''}
-                  </span>
+                  <span>restaurants</span>
                 </p>
                 <div className={styles.headerStats}>
                   <p className={styles.statCard}>
@@ -333,16 +438,41 @@ export default function RestaurantsPage() {
               </>
             )}
           </div>
+        </div>
 
+        <div className={styles.headerCarouselWrap}>
           <div className={styles.headerGallery} aria-hidden="true">
-            <div className={styles.headerPhotoCard}>
-              <img
-                className={styles.headerPhoto}
-                src={heroPhoto}
-                alt=""
-                loading="lazy"
-              />
-              <span className={styles.galleryBadge}>Restaurant le plus liké</span>
+            <div className={styles.headerCarousel}>
+              <span className={styles.galleryBadge}>Sélection des restaurant les plus likés</span>
+              <div className={styles.carouselTrack}>
+                {TOP_LIKED_SELECTION.map((restaurant) => (
+                  <article key={restaurant.id} className={styles.carouselCard}>
+                    <img
+                      className={styles.carouselPhoto}
+                      src={restaurant.photo}
+                      alt=""
+                      loading="lazy"
+                    />
+                    <div className={styles.carouselOverlay}>
+                      <div className={styles.carouselStars}>
+                        {Array.from({ length: restaurant.stars }, (_, i) => (
+                          <img key={i} src="/etoile-michelin.png" alt="" className={styles.carouselStarImg} />
+                        ))}
+                      </div>
+                      <p className={styles.carouselName}>{restaurant.name}</p>
+                      <p className={styles.carouselMeta}>{restaurant.city}</p>
+                      <p className={styles.carouselMeta}>{restaurant.cuisine}</p>
+                      <div className={styles.carouselBottom}>
+                        <span className={styles.carouselPrice}>{restaurant.price}</span>
+                        <span className={styles.carouselLikes}>
+                          <Heart size={12} />
+                          <span>{restaurant.likes}</span>
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
         </div>

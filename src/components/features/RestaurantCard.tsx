@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Heart, Bookmark, CalendarCheck, MapPin, Clock, Images } from 'lucide-react'
+import { Heart, Bookmark, CalendarCheck, MapPin, Clock, Images, RotateCw } from 'lucide-react'
 import type { Restaurant } from '../../types/restaurant.types'
 import styles from './RestaurantCard.module.css'
 import PhotoCarousel from '../ui/PhotoCarousel'
@@ -85,6 +85,11 @@ export default function RestaurantCard({
     if (hasPhotos) setCarouselOpen(true)
   }
 
+  function handleMoreClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    setFlipped(true)
+  }
+
   return (
     <>
     <div
@@ -117,8 +122,18 @@ export default function RestaurantCard({
               </div>
             )}
             <div className={styles.photoHint}>
-              {hasPhotos ? 'Cliquer pour voir les photos' : 'Cliquer pour plus de détails'}
+              {hasPhotos ? 'Cliquer pour voir les photos' : 'Cliquer pour voir les details'}
             </div>
+
+            <button
+              type="button"
+              className={styles.moreBtnOverlay}
+              onClick={handleMoreClick}
+              aria-label={`En savoir plus sur ${name}`}
+            >
+              <RotateCw size={12} />
+              <span>En savoir plus</span>
+            </button>
           </div>
 
           <div className={styles.frontContent}>
@@ -130,12 +145,10 @@ export default function RestaurantCard({
               <MapPin size={12} className={styles.infoIcon} />
               <span>{address}</span>
             </p>
-            <p className={styles.infoRow}>
-              <Clock size={12} className={styles.infoIcon} />
-              <span>Voir les horaires</span>
-            </p>
 
             <p className={styles.cuisine}>{cuisine}</p>
+
+            <p className={styles.flipHint}>Cliquez sur la carte pour la retourner et voir les details.</p>
 
             <div className={styles.frontBottom}>
               <span className={styles.price}>{price}</span>

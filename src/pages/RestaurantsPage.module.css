@@ -14,9 +14,12 @@
 .headerShell {
   width: min(1200px, 100%);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
+  display: block;
+}
+
+.headerCarouselWrap {
+  width: min(1200px, 100%);
+  margin: 14px auto 0;
 }
 
 .headerContent {
@@ -34,13 +37,12 @@
     padding: 28px 24px 0;
   }
 
-  .headerShell {
-    grid-template-columns: 1.06fr 1fr;
-    gap: 16px;
-  }
-
   .headerContent {
     padding: 24px;
+  }
+
+  .headerCarouselWrap {
+    margin-top: 16px;
   }
 }
 
@@ -49,9 +51,8 @@
     padding: 34px 40px 0;
   }
 
-  .headerShell {
-    grid-template-columns: minmax(430px, 1.1fr) minmax(340px, 0.95fr);
-    gap: 18px;
+  .headerCarouselWrap {
+    margin-top: 18px;
   }
 }
 
@@ -160,53 +161,136 @@
   display: block;
 }
 
-.headerPhotoCard {
+.headerCarousel {
   position: relative;
-  overflow: hidden;
-  border-radius: 16px;
   border: 1px solid #dbe4ef;
-  background: #e2e8f0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.09);
   min-height: 260px;
-}
-
-.headerPhotoCard::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(15, 23, 42, 0.05) 0%,
-    rgba(15, 23, 42, 0.35) 100%
-  );
-}
-
-.headerPhoto {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.35s ease;
-}
-
-.headerPhotoCard:hover .headerPhoto {
-  transform: scale(1.04);
+  padding: 48px 12px 12px;
 }
 
 .galleryBadge {
   position: absolute;
   left: 12px;
-  bottom: 12px;
+  top: 12px;
   z-index: 1;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid #dbe4ef;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 5px 10px;
+}
+
+.carouselTrack {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.carouselTrack::-webkit-scrollbar {
+  height: 6px;
+}
+
+.carouselTrack::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 12px;
+}
+
+.carouselCard {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  background: #0f172a;
+  min-width: 220px;
+  height: 210px;
+  flex: 0 0 220px;
+  scroll-snap-align: start;
+}
+
+.carouselPhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.carouselCard:hover .carouselPhoto {
+  transform: scale(1.05);
+}
+
+.carouselOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.86) 100%);
+}
+
+.carouselStars {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  align-self: flex-start;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.carouselStarImg {
+  width: auto;
+  height: 14px;
+  object-fit: contain;
+}
+
+.carouselName {
+  margin: 0;
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.carouselMeta {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.carouselBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.carouselPrice {
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
+
+.carouselLikes {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: #ffffff;
   font-size: 0.74rem;
   font-weight: 600;
-  padding: 5px 10px;
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
 }
 
 /* ── Barre de filtres globale ─────────────────────────────── */
@@ -223,8 +307,15 @@
 }
 
 @media (min-width: 768px) {
-  .headerPhotoCard {
+  .headerCarousel {
     min-height: 312px;
+    padding: 50px 14px 14px;
+  }
+
+  .carouselCard {
+    min-width: 240px;
+    height: 246px;
+    flex-basis: 240px;
   }
 
   .headerStats {
@@ -234,8 +325,14 @@
   .filterBar { padding: 14px 24px; }
 }
 @media (min-width: 1024px) {
-  .headerPhotoCard {
+  .headerCarousel {
     min-height: 352px;
+  }
+
+  .carouselCard {
+    min-width: 260px;
+    height: 280px;
+    flex-basis: 260px;
   }
 
   .filterBar { padding: 14px 40px; }
