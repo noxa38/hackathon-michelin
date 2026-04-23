@@ -169,7 +169,6 @@ export const updateProfessionalRestaurant = async (req, res) => {
   try {
     const userId = req.user.id;
     const { restaurantId } = req.params;
-    const { hours, menu, description, prices, photos } = req.body;
 
     if (!restaurantId) {
       return res.status(400).json({ message: "Restaurant ID is required" });
@@ -181,12 +180,38 @@ export const updateProfessionalRestaurant = async (req, res) => {
       return res.status(403).json({ message: "You don't have permission to edit this restaurant" });
     }
 
+    const allowedFields = [
+      "name",
+      "address",
+      "location",
+      "city",
+      "country",
+      "price",
+      "cuisine",
+      "phone_number",
+      "website_url",
+      "award",
+      "menu",
+      "green_star",
+      "facilities",
+      "opening_hours",
+      "description",
+    ];
+
     const updateData = {};
-    if (hours) updateData.hours = hours;
-    if (menu) updateData.menu = menu;
-    if (description) updateData.description = description;
-    if (prices) updateData.prices = prices;
-    if (photos) updateData.photos = photos;
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
+    if (updateData.green_star !== undefined) {
+      const parsedGreenStar = Number(updateData.green_star);
+      if (!Number.isFinite(parsedGreenStar)) {
+        return res.status(400).json({ message: "green_star must be a number" });
+      }
+      updateData.green_star = parsedGreenStar;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({ message: "At least one field must be provided" });

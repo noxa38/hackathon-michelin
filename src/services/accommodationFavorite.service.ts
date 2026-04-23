@@ -1,3 +1,5 @@
+import type { Accommodation } from '../types/accommodation.types'
+
 const API_BASE = '/api/favorites'
 
 export const addAccommodationFavorite = async (token: string, accommodationId: number): Promise<void> => {
@@ -30,7 +32,7 @@ export const removeAccommodationFavorite = async (token: string, accommodationId
   }
 }
 
-export const getUserAccommodationFavorites = async (token: string): Promise<any[]> => {
+export const getUserAccommodationFavorites = async (token: string): Promise<Accommodation[]> => {
   const response = await fetch(`${API_BASE}/accommodation/list`, {
     headers: {
       'Authorization': `Bearer ${token}`,

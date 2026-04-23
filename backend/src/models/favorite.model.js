@@ -75,7 +75,7 @@ export async function isAccommodationFavorite(userId, accommodationId) {
 
 export async function getUserAccommodationFavorites(userId) {
   const [rows] = await pool.execute(
-    'SELECT a.* FROM accommodations a INNER JOIN accommodation_favorites af ON a.id = af.accommodation_id WHERE af.user_id = ? ORDER BY af.created_at DESC',
+    'SELECT a.* FROM accommodation a INNER JOIN accommodation_favorites af ON a.id = af.accommodation_id WHERE af.user_id = ? ORDER BY af.created_at DESC',
     [userId]
   )
   return rows

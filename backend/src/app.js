@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import restaurantRoutes from "./routes/restaurant.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import listRoutes from "./routes/list.routes.js";
@@ -10,7 +12,10 @@ import favoriteRoutes from "./routes/favorite.routes.js";
 import friendRoutes from "./routes/friend.routes.js";
 import pool from "./config/db.js";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const app = express();
 
@@ -51,7 +56,7 @@ app.listen(PORT, async () => {
         id               INT AUTO_INCREMENT PRIMARY KEY,
         list_id          INT NOT NULL,
         accommodation_id INT NOT NULL,
-        accommodation_source VARCHAR(30) NOT NULL DEFAULT 'hotels',
+        accommodation_source VARCHAR(30) NOT NULL DEFAULT 'accommodation',
         added_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_list_acc_list FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
         UNIQUE KEY unique_list_accommodation (list_id, accommodation_source, accommodation_id)
@@ -63,7 +68,7 @@ app.listen(PORT, async () => {
     if (!Array.isArray(accommodationSourceColumn) || accommodationSourceColumn.length === 0) {
       await pool.execute(`
         ALTER TABLE list_accommodations
-        ADD COLUMN accommodation_source VARCHAR(30) NOT NULL DEFAULT 'hotels' AFTER accommodation_id
+        ADD COLUMN accommodation_source VARCHAR(30) NOT NULL DEFAULT 'accommodation' AFTER accommodation_id
       `);
     }
 
@@ -129,7 +134,6 @@ app.listen(PORT, async () => {
       `);
     }
 
-    console.log("list_accommodations table ready");
   } catch (err) {
     console.error("Migration warning:", err.message);
   }

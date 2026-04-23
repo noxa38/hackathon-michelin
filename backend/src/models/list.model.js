@@ -169,7 +169,7 @@ class List {
       const ids = rows.map((r) => r.id);
       const placeholders = ids.map(() => '?').join(',');
       const [photos] = await db.execute(
-        `SELECT restaurant_id, url, caption, position
+        `SELECT restaurant_id, url, position
          FROM restaurant_photos
          WHERE restaurant_id IN (${placeholders})
          ORDER BY restaurant_id, position ASC`,
@@ -178,7 +178,7 @@ class List {
       const photoMap = {};
       for (const p of photos) {
         if (!photoMap[p.restaurant_id]) photoMap[p.restaurant_id] = [];
-        photoMap[p.restaurant_id].push({ url: p.url, caption: p.caption, position: p.position });
+        photoMap[p.restaurant_id].push({ url: p.url, position: p.position });
       }
       return rows.map((r) => ({ ...r, photos: photoMap[r.id] ?? [] }));
     } catch (err) {
@@ -207,8 +207,10 @@ class List {
     }
   }
 
-  static async addAccommodation(listId, accommodationId, userId, accommodationSource = "hotels") {
+  static async addAccommodation(listId, accommodationId, userId, accommodationSource = "accommodation") {
     try {
+      void accommodationSource;
+      const normalizedSource = "accommodation";
       const [listRows] = await db.execute(
         "SELECT id FROM lists WHERE id = ? AND user_id = ?",
         [listId, userId]
@@ -216,7 +218,7 @@ class List {
       if (listRows.length === 0) throw new Error("List not found");
       await db.execute(
         "INSERT IGNORE INTO list_accommodations (list_id, accommodation_id, accommodation_source) VALUES (?, ?, ?)",
-        [listId, accommodationId, accommodationSource]
+        [listId, accommodationId, normalizedSource]
       );
     } catch (err) {
       throw err;
@@ -240,41 +242,27 @@ class List {
     try {
       const [rows] = await db.execute(
         `SELECT
-            CASE
-              WHEN COALESCE(la.accommodation_source, 'hotels') = 'accommodations' THEN CONCAT('a-', a.id)
-              ELSE CONCAT('h-', h.id)
-            END AS id,
-            COALESCE(la.accommodation_source, 'hotels') AS source,
-            COALESCE(a.name, h.name) AS name,
-            COALESCE(a.city, h.city) AS city,
-            CASE
-              WHEN COALESCE(la.accommodation_source, 'hotels') = 'accommodations' THEN 'Hébergement'
-              WHEN h.stars >= 4 THEN 'Hôtel de luxe'
-              WHEN h.stars = 3 THEN 'Hôtel haut de gamme'
-              ELSE 'Hôtel'
-            END AS category,
-            COALESCE(a.address, h.address) AS address,
-            COALESCE(a.country, h.country) AS country,
+            CONCAT('a-', a.id) AS id,
+            'accommodation' AS source,
+            a.name AS name,
+            a.city AS city,
+            COALESCE(a.award, 'Hôtel') AS category,
+            a.address AS address,
+            a.country AS country,
             a.photo_url AS photo_url,
-            h.photo_url AS image_url,
-            COALESCE(a.stars, h.stars) AS stars,
-            h.stars AS rating_stars,
-            COALESCE(a.latitude, h.latitude) AS latitude,
-            COALESCE(a.longitude, h.longitude) AS longitude,
-            COALESCE(a.phone, h.phone) AS phone,
-            COALESCE(a.description, h.description) AS description,
-            COALESCE(a.facilities, h.facilities) AS facilities,
-            COALESCE(a.price_from, h.price_from) AS price_from
+            a.photo_url AS image_url,
+            a.award AS award,
+            NULL AS latitude,
+            NULL AS longitude,
+            a.phone AS phone,
+            a.website_url AS website_url,
+            a.description AS description,
+            a.facilities AS facilities,
+            a.price_from AS price_from
          FROM list_accommodations la
          JOIN lists l ON la.list_id = l.id
-         LEFT JOIN hotels h
-           ON COALESCE(la.accommodation_source, 'hotels') = 'hotels'
-          AND h.id = la.accommodation_id
-         LEFT JOIN accommodations a
-           ON COALESCE(la.accommodation_source, 'hotels') = 'accommodations'
-          AND a.id = la.accommodation_id
+         JOIN accommodation a ON a.id = la.accommodation_id
          WHERE la.list_id = ? AND l.user_id = ?
-           AND (h.id IS NOT NULL OR a.id IS NOT NULL)
          ORDER BY la.added_at DESC`,
         [listId, userId]
       );

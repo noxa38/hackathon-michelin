@@ -148,7 +148,7 @@ class User {
 
       // Ensure professional_restaurants entry exists
       await connection.query(
-        "INSERT INTO professional_restaurants (user_id, restaurant_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE updated_at = CURRENT_TIMESTAMP",
+        "INSERT INTO professional_restaurants (user_id, restaurant_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE restaurant_id = VALUES(restaurant_id)",
         [user_id, restaurant_id]
       );
 
@@ -240,27 +240,25 @@ class User {
       "address",
       "city",
       "country",
+      "price",
       "cuisine",
-      "phone_number",
+      "phone",
+      "website_url",
+      "award",
+      "menu",
+      "green_star",
+      "facilities",
+      "opening_hours",
       "description",
     ]);
 
-    const professionalFields = new Set(["hours", "menu", "prices", "photos"]);
-
     const restaurantSet = [];
     const restaurantValues = [];
-    const professionalSet = [];
-    const professionalValues = [];
 
     Object.entries(data).forEach(([key, value]) => {
       if (restaurantEditableFields.has(key)) {
         restaurantSet.push(`${key} = ?`);
         restaurantValues.push(value);
-      }
-
-      if (professionalFields.has(key)) {
-        professionalSet.push(`${key} = ?`);
-        professionalValues.push(typeof value === "object" ? JSON.stringify(value) : value);
       }
     });
 
@@ -272,13 +270,6 @@ class User {
         await connection.query(
           `UPDATE restaurants SET ${restaurantSet.join(", ")} WHERE id = ?`,
           [...restaurantValues, restaurantId]
-        );
-      }
-
-      if (professionalSet.length > 0) {
-        await connection.query(
-          `UPDATE professional_restaurants SET ${professionalSet.join(", ")} WHERE user_id = ? AND restaurant_id = ?`,
-          [...professionalValues, userId, restaurantId]
         );
       }
 
@@ -310,7 +301,7 @@ class User {
     try {
       const [userCount] = await db.query("SELECT COUNT(*) as count FROM users WHERE user_type != 'admin'");
       const [restaurantCount] = await db.query("SELECT COUNT(*) as count FROM restaurants");
-      const [accommodationCount] = await db.query("SELECT COUNT(*) as count FROM hotels");
+      const [accommodationCount] = await db.query("SELECT COUNT(*) as count FROM accommodation");
       
       return {
         totalUsers: userCount[0]?.count || 0,

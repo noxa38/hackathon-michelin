@@ -177,7 +177,7 @@ export async function addAccommodationToList(
   token: string,
   listId: number,
   accommodationId: number,
-  accommodationSource: 'hotels' | 'accommodations' = 'hotels'
+  accommodationSource: 'accommodation' = 'accommodation'
 ): Promise<void> {
   const response = await fetch(`${API_BASE}/lists/${listId}/accommodations`, {
     method: 'POST',

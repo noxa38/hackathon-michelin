@@ -162,7 +162,7 @@ export async function addAccommodation(req, res) {
   try {
     const userId = req.user.id;
     const listId = req.params.listId;
-    const { accommodationId, accommodationSource = "hotels" } = req.body;
+    const { accommodationId, accommodationSource = "accommodation" } = req.body;
     if (!accommodationId) return res.status(400).json({ error: "ID hébergement requis" });
     await List.addAccommodation(listId, accommodationId, userId, accommodationSource);
     return res.json({ message: "Hébergement ajouté à la liste" });

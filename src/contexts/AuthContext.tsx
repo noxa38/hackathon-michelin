@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import * as authService from '../services/auth.service'
 import { type User } from '../types/auth.types'
 
+/* eslint-disable react-hooks/set-state-in-effect */
+
 interface AuthContextType {
   isAuthenticated: boolean
   loading: boolean
@@ -80,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext)
   if (!context) {

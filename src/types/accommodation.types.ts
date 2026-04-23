@@ -9,16 +9,17 @@ export interface HotelRoomDetail {
 
 export interface Accommodation {
   id: number | string
-  source?: 'hotels' | 'accommodations'
+  source?: 'accommodation'
   name: string
   city: string
-  category: string
+  category?: string
   address: string
   image_url?: string
   image_urls?: string[]
   room_details?: HotelRoomDetail[]
   photo_url?: string
   country?: string
+  award?: string
   stars?: number
   rating_stars?: number
   latitude?: number
@@ -28,4 +29,5 @@ export interface Accommodation {
   description?: string
   facilities?: string
   price_from?: number
+  opening_hours?: string
 }

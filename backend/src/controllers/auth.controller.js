@@ -128,8 +128,6 @@ export async function getProfile(req, res) {
       firstName: user.first_name,
       lastName: user.last_name,
       userType: user.user_type,
-      avatarUrl: user.avatar_url,
-      bio: user.bio,
       createdAt: user.created_at,
     });
   } catch (error) {
@@ -141,13 +139,11 @@ export async function getProfile(req, res) {
 export async function updateProfile(req, res) {
   try {
     const userId = req.user.id;
-    const { firstName, lastName, bio, avatarUrl } = req.body;
+    const { firstName, lastName } = req.body;
 
     const updateData = {};
     if (firstName !== undefined) updateData.first_name = firstName;
     if (lastName !== undefined) updateData.last_name = lastName;
-    if (bio !== undefined) updateData.bio = bio;
-    if (avatarUrl !== undefined) updateData.avatar_url = avatarUrl;
 
     await User.update(userId, updateData);
     const updatedUser = await User.findById(userId);
@@ -159,8 +155,6 @@ export async function updateProfile(req, res) {
       firstName: updatedUser.first_name,
       lastName: updatedUser.last_name,
       userType: updatedUser.user_type,
-      avatarUrl: updatedUser.avatar_url,
-      bio: updatedUser.bio,
       createdAt: updatedUser.created_at,
     });
   } catch (error) {

@@ -162,7 +162,7 @@ class Friend {
       const restaurantIds = restaurantFavorites.map((restaurant) => restaurant.id);
       const placeholders = restaurantIds.map(() => "?").join(",");
       const [photos] = await db.execute(
-        `SELECT restaurant_id, url, caption, position
+        `SELECT restaurant_id, url, position
          FROM restaurant_photos
          WHERE restaurant_id IN (${placeholders})
          ORDER BY restaurant_id, position ASC`,
@@ -176,7 +176,6 @@ class Friend {
         }
         photoMap[photo.restaurant_id].push({
           url: photo.url,
-          caption: photo.caption,
           position: photo.position,
         });
       }
@@ -188,42 +187,28 @@ class Friend {
 
     const [accommodationFavorites] = await db.execute(
       `SELECT
-         CASE
-           WHEN COALESCE(la.accommodation_source, 'hotels') = 'accommodations' THEN CONCAT('a-', a.id)
-           ELSE CONCAT('h-', h.id)
-         END AS id,
-         COALESCE(la.accommodation_source, 'hotels') AS source,
-         COALESCE(a.name, h.name) AS name,
-         COALESCE(a.city, h.city) AS city,
-         CASE
-           WHEN COALESCE(la.accommodation_source, 'hotels') = 'accommodations' THEN 'Hébergement'
-           WHEN h.stars >= 4 THEN 'Hôtel de luxe'
-           WHEN h.stars = 3 THEN 'Hôtel haut de gamme'
-           ELSE 'Hôtel'
-         END AS category,
-         COALESCE(a.address, h.address) AS address,
-         COALESCE(a.country, h.country) AS country,
+         CONCAT('a-', a.id) AS id,
+         'accommodation' AS source,
+         a.name AS name,
+         a.city AS city,
+         COALESCE(a.award, 'Hôtel') AS category,
+         a.address AS address,
+         a.country AS country,
          a.photo_url AS photo_url,
-         h.photo_url AS image_url,
-         COALESCE(a.stars, h.stars) AS stars,
-         h.stars AS rating_stars,
-         COALESCE(a.latitude, h.latitude) AS latitude,
-         COALESCE(a.longitude, h.longitude) AS longitude,
-         COALESCE(a.phone, h.phone) AS phone,
-         COALESCE(a.description, h.description) AS description,
-         COALESCE(a.facilities, h.facilities) AS facilities,
-         COALESCE(a.price_from, h.price_from) AS price_from
+         a.photo_url AS image_url,
+         a.award AS award,
+         NULL AS latitude,
+         NULL AS longitude,
+         a.phone AS phone,
+         a.website_url AS website_url,
+         a.description AS description,
+         a.facilities AS facilities,
+         a.price_from AS price_from
        FROM lists l
        JOIN list_accommodations la ON la.list_id = l.id
-       LEFT JOIN hotels h
-         ON COALESCE(la.accommodation_source, 'hotels') = 'hotels'
-        AND h.id = la.accommodation_id
-       LEFT JOIN accommodations a
-         ON COALESCE(la.accommodation_source, 'hotels') = 'accommodations'
-        AND a.id = la.accommodation_id
+       JOIN accommodation a ON a.id = la.accommodation_id
        WHERE l.user_id = ?
          AND l.name = ?
-         AND (h.id IS NOT NULL OR a.id IS NOT NULL)
        ORDER BY la.added_at DESC
        LIMIT 4`,
       [friendId, ACCOMMODATIONS_LIKED_LIST_NAME]

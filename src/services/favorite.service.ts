@@ -1,3 +1,5 @@
+import type { Restaurant } from '../types/restaurant.types'
+
 const API_BASE = '/api/favorites'
 
 export async function addFavorite(token: string, restaurantId: number): Promise<void> {
@@ -35,7 +37,7 @@ export async function isFavorite(token: string, restaurantId: number): Promise<b
   return data.isFavorite
 }
 
-export async function getUserFavorites(token: string): Promise<any[]> {
+export async function getUserFavorites(token: string): Promise<Restaurant[]> {
   const response = await fetch(`${API_BASE}/list`, {
     headers: {
       'Authorization': `Bearer ${token}`,

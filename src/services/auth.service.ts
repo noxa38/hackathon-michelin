@@ -14,7 +14,7 @@ export async function register(payload: RegisterPayload): Promise<AuthResponse> 
     try {
       const error = JSON.parse(text)
       throw new Error(error.error || 'Registration failed')
-    } catch (e) {
+    } catch {
       throw new Error(`Registration failed with status ${response.status}: ${text}`)
     }
   }
@@ -24,7 +24,7 @@ export async function register(payload: RegisterPayload): Promise<AuthResponse> 
   try {
     const result = JSON.parse(text)
     return result
-  } catch (e) {
+  } catch {
     throw new Error('Invalid JSON response from server')
   }
 }
@@ -41,7 +41,7 @@ export async function login(payload: LoginPayload): Promise<AuthResponse> {
     try {
       const error = JSON.parse(text)
       throw new Error(error.error || 'Login failed')
-    } catch (e) {
+    } catch {
       throw new Error(`Login failed with status ${response.status}: ${text}`)
     }
   }
@@ -51,7 +51,7 @@ export async function login(payload: LoginPayload): Promise<AuthResponse> {
   try {
     const result = JSON.parse(text)
     return result
-  } catch (e) {
+  } catch {
     throw new Error('Invalid JSON response from server')
   }
 }

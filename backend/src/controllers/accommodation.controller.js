@@ -6,14 +6,19 @@ function toNullableNumber(value) {
   return Number.isFinite(numericValue) ? numericValue : null;
 }
 
+function buildAccommodationImages(photoUrl, rooms) {
+  const imageCandidates = [photoUrl, ...(rooms || []).map((room) => room.photo_url)];
+  return [...new Set(imageCandidates.filter(Boolean))].slice(0, 5);
+}
+
 export async function getAccommodations(req, res) {
   try {
     const { q, city } = req.query;
 
     let query = `
-      SELECT id, name, address, city, country, latitude, longitude, 
-             stars, phone, description, facilities, price_from as price, photo_url
-      FROM hotels
+      SELECT id, name, address, city, country, phone,
+             description, award, facilities, price_from as price_from, photo_url, website_url, opening_hours
+      FROM accommodation
       WHERE 1=1
     `;
     const params = [];
@@ -47,33 +52,32 @@ export async function getAccommodationById(req, res) {
 
     const connection = await db.getConnection();
 
-    // Get hotel
-    const [hotels] = await connection.query(
-      `SELECT id, name, address, city, country, latitude, longitude, 
-              stars, phone, description, facilities, price_from as price, photo_url
-       FROM hotels WHERE id = ?`,
+    const [accommodations] = await connection.query(
+      `SELECT id, name, address, city, country, phone,
+              description, award, facilities, price_from as price_from, photo_url, website_url, opening_hours
+       FROM accommodation WHERE id = ?`,
       [id]
     );
 
-    if (hotels.length === 0) {
+    if (accommodations.length === 0) {
       connection.release();
-      return res.status(404).json({ error: "Hotel not found" });
+      return res.status(404).json({ error: "Accommodation not found" });
     }
 
-    const hotel = hotels[0];
+    const accommodation = accommodations[0];
 
-    // Get rooms for this hotel
     const [rooms] = await connection.query(
-      `SELECT id, hotel_id, room_type, description, price_per_night, capacity, amenities, photo_url
-       FROM hotel_rooms WHERE hotel_id = ?`,
+      `SELECT id, accommodation_id, room_type, description, price_per_night, capacity, amenities, photo_url
+       FROM accommodation_rooms WHERE accommodation_id = ?`,
       [id]
     );
 
     connection.release();
 
     res.json({
-      ...hotel,
-      rooms: rooms || []
+      ...accommodation,
+      image_urls: buildAccommodationImages(accommodation.photo_url, rooms),
+      room_details: rooms || []
     });
   } catch (error) {
     console.error("Error fetching accommodation:", error);
@@ -93,41 +97,41 @@ export async function createAccommodationByAdmin(req, res) {
       address: req.body.address ?? null,
       city: req.body.city ?? null,
       country: req.body.country ?? null,
-      latitude: toNullableNumber(req.body.latitude),
-      longitude: toNullableNumber(req.body.longitude),
-      stars: toNullableNumber(req.body.stars),
       phone: req.body.phone ?? null,
       description: req.body.description ?? null,
+      award: req.body.award ?? null,
       facilities: req.body.facilities ?? null,
       price_from: toNullableNumber(req.body.price_from),
       photo_url: req.body.photo_url ?? null,
+      website_url: req.body.website_url ?? null,
+      opening_hours: req.body.opening_hours ?? null,
     };
 
     const connection = await db.getConnection();
     const [result] = await connection.query(
-      `INSERT INTO hotels
-        (name, address, city, country, latitude, longitude, stars, phone, description, facilities, price_from, photo_url)
+      `INSERT INTO accommodation
+        (name, address, city, country, phone, description, award, facilities, price_from, photo_url, website_url, opening_hours)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         payload.name,
         payload.address,
         payload.city,
         payload.country,
-        payload.latitude,
-        payload.longitude,
-        payload.stars,
         payload.phone,
         payload.description,
+        payload.award,
         payload.facilities,
         payload.price_from,
         payload.photo_url,
+        payload.website_url,
+        payload.opening_hours,
       ]
     );
 
     const [rows] = await connection.query(
-      `SELECT id, name, address, city, country, latitude, longitude,
-              stars, phone, description, facilities, price_from as price, photo_url
-       FROM hotels WHERE id = ?`,
+      `SELECT id, name, address, city, country, phone,
+              description, award, facilities, price_from as price_from, photo_url, website_url, opening_hours
+        FROM accommodation WHERE id = ?`,
       [result.insertId]
     );
 
@@ -151,14 +155,14 @@ export async function updateAccommodationByAdmin(req, res) {
       address: req.body.address,
       city: req.body.city,
       country: req.body.country,
-      latitude: req.body.latitude === undefined ? undefined : toNullableNumber(req.body.latitude),
-      longitude: req.body.longitude === undefined ? undefined : toNullableNumber(req.body.longitude),
-      stars: req.body.stars === undefined ? undefined : toNullableNumber(req.body.stars),
       phone: req.body.phone,
       description: req.body.description,
+      award: req.body.award,
       facilities: req.body.facilities,
       price_from: req.body.price_from === undefined ? undefined : toNullableNumber(req.body.price_from),
       photo_url: req.body.photo_url,
+      website_url: req.body.website_url,
+      opening_hours: req.body.opening_hours,
     };
 
     const updates = Object.entries(fields).filter(([, value]) => value !== undefined);
@@ -167,7 +171,7 @@ export async function updateAccommodationByAdmin(req, res) {
     }
 
     const connection = await db.getConnection();
-    const [existingRows] = await connection.query("SELECT id FROM hotels WHERE id = ?", [accommodationId]);
+    const [existingRows] = await connection.query("SELECT id FROM accommodation WHERE id = ?", [accommodationId]);
     if (!Array.isArray(existingRows) || existingRows.length === 0) {
       connection.release();
       return res.status(404).json({ error: "Hébergement introuvable" });
@@ -177,14 +181,14 @@ export async function updateAccommodationByAdmin(req, res) {
     const values = updates.map(([, value]) => value);
 
     await connection.query(
-      `UPDATE hotels SET ${setClause} WHERE id = ?`,
+      `UPDATE accommodation SET ${setClause} WHERE id = ?`,
       [...values, accommodationId]
     );
 
     const [rows] = await connection.query(
-      `SELECT id, name, address, city, country, latitude, longitude,
-              stars, phone, description, facilities, price_from as price, photo_url
-       FROM hotels WHERE id = ?`,
+      `SELECT id, name, address, city, country, phone,
+              description, award, facilities, price_from as price_from, photo_url, website_url, opening_hours
+        FROM accommodation WHERE id = ?`,
       [accommodationId]
     );
 
@@ -204,13 +208,13 @@ export async function deleteAccommodationByAdmin(req, res) {
     }
 
     const connection = await db.getConnection();
-    const [existingRows] = await connection.query("SELECT id FROM hotels WHERE id = ?", [accommodationId]);
+    const [existingRows] = await connection.query("SELECT id FROM accommodation WHERE id = ?", [accommodationId]);
     if (!Array.isArray(existingRows) || existingRows.length === 0) {
       connection.release();
       return res.status(404).json({ error: "Hébergement introuvable" });
     }
 
-    await connection.query("DELETE FROM hotels WHERE id = ?", [accommodationId]);
+    await connection.query("DELETE FROM accommodation WHERE id = ?", [accommodationId]);
     connection.release();
     return res.status(204).send();
   } catch (error) {

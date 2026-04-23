@@ -10,6 +10,7 @@ export interface Restaurant {
   address: string
   location: string
   city: string
+  country?: string
   price: string
   cuisine: string
   longitude: number

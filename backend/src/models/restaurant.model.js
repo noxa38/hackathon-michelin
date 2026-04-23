@@ -5,7 +5,7 @@ async function attachPhotos(restaurants) {
   const ids = restaurants.map((r) => r.id);
   const placeholders = ids.map(() => "?").join(",");
   const [photos] = await pool.execute(
-    `SELECT restaurant_id, url, caption, position
+    `SELECT restaurant_id, url, position
      FROM restaurant_photos
      WHERE restaurant_id IN (${placeholders})
      ORDER BY restaurant_id, position ASC`,
@@ -16,7 +16,6 @@ async function attachPhotos(restaurants) {
     if (!photoMap[p.restaurant_id]) photoMap[p.restaurant_id] = [];
     photoMap[p.restaurant_id].push({
       url: p.url,
-      caption: p.caption,
       position: p.position,
     });
   }
@@ -25,11 +24,19 @@ async function attachPhotos(restaurants) {
 
 export async function getAllRestaurants() {
   const [rows] = await pool.execute(
-    `SELECT id, name, address, location, city, price, cuisine, longitude, latitude,
-            phone_number, michelin_url, website_url, award, stars, green_star,
-            facilities, description, opening_hours
+    `SELECT id, name, address, city, country, price, cuisine,
+            NULL AS longitude, NULL AS latitude,
+            phone, NULL AS michelin_url, website_url, award,
+            CASE
+              WHEN award LIKE '3%' THEN 3
+              WHEN award LIKE '2%' THEN 2
+              WHEN award LIKE '1%' THEN 1
+              ELSE 0
+            END AS stars,
+            green_star,
+            facilities, description, opening_hours, menu
      FROM restaurants
-     ORDER BY stars DESC, name ASC`,
+     ORDER BY name ASC`,
   );
   return attachPhotos(rows);
 }
@@ -37,8 +44,15 @@ export async function getAllRestaurants() {
 export async function searchRestaurants(query, city) {
   const like = `%${query}%`;
   const [rows] = await pool.execute(
-    `SELECT id, name, address, location, city, price, cuisine,
-            michelin_url, award, stars, green_star, opening_hours
+    `SELECT id, name, address, city, country, price, cuisine,
+            phone, website_url, award,
+            CASE
+              WHEN award LIKE '3%' THEN 3
+              WHEN award LIKE '2%' THEN 2
+              WHEN award LIKE '1%' THEN 1
+              ELSE 0
+            END AS stars,
+            green_star, opening_hours, menu
      FROM restaurants
      WHERE (name LIKE ? OR city LIKE ?)
        AND (? = '' OR city = ?)
@@ -63,74 +77,79 @@ export async function getNearbyRestaurants(
   radiusKm = 20,
   limit = 12,
 ) {
-  const safeLatitude = Number(latitude);
-  const safeLongitude = Number(longitude);
-  const safeRadiusKm = Number.isFinite(Number(radiusKm))
-    ? Math.min(Math.max(Number(radiusKm), 1), 200)
-    : 20;
-  const safeLimit = Number.isFinite(Number(limit))
-    ? Math.min(Math.max(Math.floor(Number(limit)), 1), 100)
-    : 12;
-
-  if (!Number.isFinite(safeLatitude) || !Number.isFinite(safeLongitude)) {
-    return [];
-  }
-
-  const [rows] = await pool.execute(
-    `SELECT id,
-            name,
-            city,
-            latitude,
-            longitude,
-            (6371 * ACOS(
-              COS(RADIANS(?)) * COS(RADIANS(latitude)) *
-              COS(RADIANS(longitude) - RADIANS(?)) +
-              SIN(RADIANS(?)) * SIN(RADIANS(latitude))
-            )) AS distance_km
-     FROM restaurants
-     WHERE latitude IS NOT NULL
-       AND longitude IS NOT NULL
-     HAVING distance_km <= ${safeRadiusKm}
-     ORDER BY distance_km ASC
-     LIMIT ${safeLimit}`,
-    [safeLatitude, safeLongitude, safeLatitude],
-  );
-  return rows;
+  void latitude;
+  void longitude;
+  void radiusKm;
+  void limit;
+  return [];
 }
 
 export async function createRestaurant(payload) {
+  const restaurantPayload = {
+    name: payload.name,
+    address: payload.address,
+    city: payload.city,
+    country: payload.country,
+    price: payload.price,
+    cuisine: payload.cuisine,
+    phone: payload.phone,
+    website_url: payload.website_url,
+    award: payload.award,
+    menu: payload.menu,
+    green_star: payload.green_star,
+    facilities: payload.facilities,
+    description: payload.description,
+    opening_hours: payload.opening_hours,
+  };
+
   const [result] = await pool.execute(
     `INSERT INTO restaurants
-      (name, address, location, city, country, price, cuisine, longitude, latitude,
-       phone_number, michelin_url, website_url, award, stars, green_star,
+      (name, address, city, country, price, cuisine,
+       phone, website_url, award, menu, green_star,
        facilities, description, opening_hours)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      payload.name,
-      payload.address ?? null,
-      payload.location ?? null,
-      payload.city ?? null,
-      payload.country ?? null,
-      payload.price ?? null,
-      payload.cuisine ?? null,
-      payload.longitude ?? null,
-      payload.latitude ?? null,
-      payload.phone_number ?? null,
-      payload.michelin_url ?? null,
-      payload.website_url ?? null,
-      payload.award ?? null,
-      payload.stars ?? 0,
-      payload.green_star ?? 0,
-      payload.facilities ?? null,
-      payload.description ?? null,
-      payload.opening_hours ?? null,
+      restaurantPayload.name,
+      restaurantPayload.address ?? null,
+      restaurantPayload.city ?? null,
+      restaurantPayload.country ?? null,
+      restaurantPayload.price ?? null,
+      restaurantPayload.cuisine ?? null,
+      restaurantPayload.phone ?? null,
+      restaurantPayload.website_url ?? null,
+      restaurantPayload.award ?? null,
+      restaurantPayload.menu ?? null,
+      restaurantPayload.green_star ?? 0,
+      restaurantPayload.facilities ?? null,
+      restaurantPayload.description ?? null,
+      restaurantPayload.opening_hours ?? null,
     ],
   );
   return Number(result.insertId);
 }
 
 export async function updateRestaurant(id, payload) {
-  const entries = Object.entries(payload).filter(([, value]) => value !== undefined);
+  const allowedFields = new Set([
+    'name',
+    'address',
+    'city',
+    'country',
+    'price',
+    'cuisine',
+    'phone',
+    'website_url',
+    'award',
+    'menu',
+    'green_star',
+    'facilities',
+    'description',
+    'opening_hours',
+  ]);
+
+  const entries = Object.entries(payload).filter(
+    ([key, value]) => value !== undefined && allowedFields.has(key),
+  );
+
   if (!entries.length) return;
 
   const fields = entries.map(([key]) => `${key} = ?`).join(', ');

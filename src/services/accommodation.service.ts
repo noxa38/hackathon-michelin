@@ -1,6 +1,50 @@
-import type { Accommodation } from '../types/accommodation.types'
+import type { Accommodation, HotelRoomDetail } from '../types/accommodation.types'
 
 const API_BASE = '/api'
+
+type AccommodationApiShape = Accommodation & {
+  price?: number | string | null
+  rooms?: HotelRoomDetail[]
+}
+
+function toNumberOrUndefined(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return undefined
+}
+
+function normalizeRoomDetails(value: unknown): HotelRoomDetail[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((room): room is HotelRoomDetail => Boolean(room) && typeof room === 'object')
+}
+
+function normalizeAccommodation(raw: AccommodationApiShape): Accommodation {
+  const roomDetails = normalizeRoomDetails(raw.room_details ?? raw.rooms)
+  const imageUrls = Array.from(
+    new Set(
+      [
+        ...(Array.isArray(raw.image_urls) ? raw.image_urls : []),
+        raw.image_url,
+        raw.photo_url,
+        ...roomDetails.map((room) => room.photo_url),
+      ].filter((value): value is string => typeof value === 'string' && value.trim().length > 0),
+    ),
+  )
+
+  const priceFrom = toNumberOrUndefined(raw.price_from) ?? toNumberOrUndefined(raw.price)
+
+  return {
+    ...raw,
+    price_from: priceFrom,
+    room_details: roomDetails,
+    image_urls: imageUrls,
+    image_url: raw.image_url ?? imageUrls[0],
+    photo_url: raw.photo_url ?? imageUrls[0],
+  }
+}
 
 export interface AccommodationSearchParams {
   q?: string
@@ -21,13 +65,15 @@ export async function fetchAccommodations(
   )
 
   if (!response.ok) throw new Error('Failed to fetch accommodations')
-  return response.json()
+  const data = (await response.json()) as AccommodationApiShape[]
+  return data.map(normalizeAccommodation)
 }
 
 export async function fetchAccommodationById(id: string): Promise<Accommodation> {
   const response = await fetch(`${API_BASE}/accommodations/${id}`)
   if (!response.ok) throw new Error('Accommodation not found')
-  return response.json()
+  const data = (await response.json()) as AccommodationApiShape
+  return normalizeAccommodation(data)
 }
 
 export interface AdminHotelPayload {
