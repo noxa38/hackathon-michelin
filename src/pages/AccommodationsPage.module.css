@@ -93,7 +93,7 @@
 .headerStats {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -662,51 +662,45 @@
 .pagination {
   width: min(1200px, 100%);
   margin: 18px auto 0;
-  padding: 0 16px;
+  padding: 0 16px 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.paginationPages {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .paginationButton {
-  min-width: 40px;
-  height: 38px;
-  border: 1px solid #dbe4ef;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #1e293b;
-  font-size: 0.86rem;
-  font-weight: 600;
-  padding: 0 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #334155;
+  font-family: var(--font-family);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
 .paginationButton:hover:not(:disabled) {
-  border-color: #94a3b8;
-  transform: translateY(-1px);
+  border-color: var(--color-red);
+  color: var(--color-red);
 }
 
 .paginationButton:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.45;
 }
 
-.paginationButtonActive {
-  background: var(--color-red);
-  border-color: var(--color-red);
-  color: #ffffff;
+.paginationInfo {
+  font-size: 0.84rem;
+  color: #475569;
+  font-weight: 600;
 }
 
 .state {
@@ -1177,6 +1171,17 @@
     gap: 10px;
   }
 
+  .headerCarousel {
+    min-height: 312px;
+    padding: 50px 14px 14px;
+  }
+
+  .carouselCard {
+    min-width: 240px;
+    height: 246px;
+    flex-basis: 240px;
+  }
+
   .headerPhotoCard {
     min-height: 312px;
   }
@@ -1197,8 +1202,8 @@
   }
 
   .pagination {
-    padding: 0 24px;
-    justify-content: center;
+    padding: 0 24px 10px;
+    justify-content: flex-end;
   }
 }
 
@@ -1214,6 +1219,16 @@
 
   .headerPhotoCard {
     min-height: 352px;
+  }
+
+  .headerCarousel {
+    min-height: 352px;
+  }
+
+  .carouselCard {
+    min-width: 260px;
+    height: 280px;
+    flex-basis: 260px;
   }
 
   .toolbar {
@@ -1233,7 +1248,7 @@
   }
 
   .pagination {
-    padding: 0 40px;
+    padding: 0 40px 12px;
   }
 }
 
@@ -1345,7 +1360,6 @@
   }
 
   .paginationButton {
-    min-width: 36px;
     height: 36px;
     font-size: 0.82rem;
     padding: 0 10px;

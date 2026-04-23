@@ -10,6 +10,8 @@ import IntroAnimation from './components/ui/IntroAnimation'
 import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
+import AdminEstablishmentFormPage from './pages/AdminEstablishmentFormPage'
+import AdminUserFormPage from './pages/AdminUserFormPage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 
 function AppContent() {
@@ -41,6 +43,22 @@ function AppContent() {
         <Route
           path="/admin-dashboard"
           element={isAuthenticated && userType === 'admin' ? <AdminDashboardPage /> : <Navigate to="/dashboard" />}
+        />
+        <Route
+          path="/admin-dashboard/fiches-etablissements/new"
+          element={isAuthenticated && userType === 'admin' ? <AdminEstablishmentFormPage /> : <Navigate to="/dashboard" />}
+        />
+        <Route
+          path="/admin-dashboard/fiches-etablissements/:type/:id/edit"
+          element={isAuthenticated && userType === 'admin' ? <AdminEstablishmentFormPage /> : <Navigate to="/dashboard" />}
+        />
+        <Route
+          path="/admin-dashboard/utilisateurs/new"
+          element={isAuthenticated && userType === 'admin' ? <AdminUserFormPage /> : <Navigate to="/dashboard" />}
+        />
+        <Route
+          path="/admin-dashboard/utilisateurs/:id/edit"
+          element={isAuthenticated && userType === 'admin' ? <AdminUserFormPage /> : <Navigate to="/dashboard" />}
         />
       </Routes>
     </>

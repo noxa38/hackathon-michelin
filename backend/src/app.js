@@ -7,6 +7,7 @@ import listRoutes from "./routes/list.routes.js";
 import professionalRoutes from "./routes/professional.routes.js";
 import accommodationRoutes from "./routes/accommodation.routes.js";
 import favoriteRoutes from "./routes/favorite.routes.js";
+import friendRoutes from "./routes/friend.routes.js";
 import pool from "./config/db.js";
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/lists", listRoutes);
 app.use("/api/accommodations", accommodationRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/friends", friendRoutes);
 app.use("/api", professionalRoutes);
 
 app.get("/", (_req, res) => {
@@ -32,6 +34,18 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   try {
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS friendships (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        friend_id INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_friendships_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT fk_friendships_friend FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_friendship (user_id, friend_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS list_accommodations (
         id               INT AUTO_INCREMENT PRIMARY KEY,

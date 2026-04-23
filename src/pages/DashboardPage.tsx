@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Plus, Edit2, Trash2, User, Mail, Calendar, AlertCircle, Bookmark, Home, Heart, UtensilsCrossed, Building2 } from 'lucide-react'
+import { LogOut, Plus, Edit2, Trash2, User, Mail, Calendar, AlertCircle, Bookmark, Home, Heart, UtensilsCrossed, Building2, Users, UserPlus, Search } from 'lucide-react'
 import * as authService from '../services/auth.service'
 import * as listService from '../services/list.service'
 import * as accommodationService from '../services/accommodation.service'
 import * as favoriteService from '../services/favorite.service'
 import * as professionalService from '../services/professional.service'
+import * as friendService from '../services/friend.service'
 import { fetchAllRestaurants } from '../services/restaurant.service'
 import { useAuth } from '../contexts/AuthContext'
 import ProfessionalRequestForm from '../components/features/ProfessionalRequestForm'
@@ -19,6 +20,7 @@ import type { User as UserType, List } from '../types/auth.types'
 import type { Restaurant } from '../types/restaurant.types'
 import type { Accommodation } from '../types/accommodation.types'
 import type { ProfessionalRestaurant } from '../types/professional.types'
+import type { FriendListItem, FriendPublicProfile, FriendSearchResult } from '../types/friend.types'
 import styles from './DashboardPage.module.css'
 
 const RESTAURANTS_LIKED_LIST_NAME = 'Restaurants likés'
@@ -42,7 +44,7 @@ function getInitialDashboardAccommodationLikeCount(accommodation: Accommodation)
   return 12 + Math.floor(stars * 20) + premiumBonus + popularitySeed
 }
 
-type DashboardTab = 'home' | 'lists' | 'profile' | 'pro-request' | 'pro-management'
+type DashboardTab = 'home' | 'lists' | 'friends' | 'profile' | 'pro-request' | 'pro-management'
 
 interface ManagedEstablishmentFormData {
   name: string
@@ -86,6 +88,12 @@ export default function DashboardPage() {
   const [editingEstablishmentId, setEditingEstablishmentId] = useState<number | null>(null)
   const [editingListId, setEditingListId] = useState<number | null>(null)
   const [editingListName, setEditingListName] = useState('')
+  const [friendSearch, setFriendSearch] = useState('')
+  const [friendSearchResults, setFriendSearchResults] = useState<FriendSearchResult[]>([])
+  const [friendSearchLoading, setFriendSearchLoading] = useState(false)
+  const [friends, setFriends] = useState<FriendListItem[]>([])
+  const [selectedFriendProfile, setSelectedFriendProfile] = useState<FriendPublicProfile | null>(null)
+  const [friendProfileLoading, setFriendProfileLoading] = useState(false)
   const [establishmentFormData, setEstablishmentFormData] = useState<ManagedEstablishmentFormData>({
     name: '',
     address: '',
@@ -165,6 +173,8 @@ export default function DashboardPage() {
         const listsData = await listService.getLists(token!)
         setLists(listsData)
         await loadLikedStats(token!, listsData)
+        const friendsData = await friendService.getFriends(token!).catch(() => [])
+        setFriends(friendsData)
 
         const restaurantsData = await accommodationService.fetchAccommodations()
         setRestaurants(restaurantsData)
@@ -387,6 +397,103 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleSearchFriends(e: React.FormEvent) {
+    e.preventDefault()
+    if (!token || !friendSearch.trim()) {
+      setFriendSearchResults([])
+      return
+    }
+
+    setFriendSearchLoading(true)
+    try {
+      const users = await friendService.searchUsers(token, friendSearch.trim())
+      setFriendSearchResults(users)
+    } catch {
+      setFriendSearchResults([])
+    } finally {
+      setFriendSearchLoading(false)
+    }
+  }
+
+  async function handleAddFriend(friendId: number) {
+    if (!token) return
+    try {
+      await friendService.addFriend(token, friendId)
+      const refreshedFriends = await friendService.getFriends(token)
+      setFriends(refreshedFriends)
+      setFriendSearchResults((current) => current.map((entry) => (
+        entry.id === friendId ? { ...entry, isFriend: true } : entry
+      )))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajout de l\'ami')
+    }
+  }
+
+  async function handleOpenFriendProfile(friendId: number) {
+    if (!token) return
+    setFriendProfileLoading(true)
+    try {
+      const profile = await friendService.getFriendPublicProfile(token, friendId)
+      setSelectedFriendProfile(profile)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement du profil ami')
+      setSelectedFriendProfile(null)
+    } finally {
+      setFriendProfileLoading(false)
+    }
+  }
+
+  function isRestaurantLikedByCurrentUser(restaurantId: number) {
+    return favorites.some((favorite) => favorite.id === restaurantId)
+  }
+
+  function isAccommodationLikedByCurrentUser(accommodationId: string | number) {
+    return accommodationFavorites.some((favorite) => String(favorite.id) === String(accommodationId))
+  }
+
+  async function handleFriendRestaurantLikeChange(restaurantId: number, nextLiked: boolean) {
+    if (!token) return
+
+    try {
+      if (nextLiked) {
+        await favoriteService.addFavorite(token, restaurantId)
+      } else {
+        await favoriteService.removeFavorite(token, restaurantId)
+      }
+      await handleFavoriteAdded()
+      await loadLikedStats(token)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour du like')
+    }
+  }
+
+  async function handleFriendAccommodationLikeToggle(accommodation: Accommodation) {
+    if (!token) return
+
+    const isLiked = isAccommodationLikedByCurrentUser(accommodation.id)
+    const numericId = Number(String(accommodation.id).replace(/^[ha]-/, ''))
+    if (!Number.isFinite(numericId)) return
+
+    try {
+      if (isLiked) {
+        const likedList = lists.find((list) => list.name === ACCOMMODATIONS_LIKED_LIST_NAME)
+        if (likedList) {
+          await listService.removeAccommodationFromList(token, likedList.id, numericId)
+        }
+      } else {
+        const likedList = await listService.findOrCreateList(token, ACCOMMODATIONS_LIKED_LIST_NAME)
+        await listService.addAccommodationToList(token, likedList.id, numericId, accommodation.source || 'hotels')
+      }
+
+      const updatedLists = await listService.getLists(token)
+      setLists(updatedLists)
+      await loadAccommodationFavoritesFromLikedList(token, updatedLists)
+      await loadLikedStats(token, updatedLists)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour du like')
+    }
+  }
+
   async function handleAccommodationFavoriteAdded() {
     if (!token) return
     try {
@@ -459,7 +566,7 @@ export default function DashboardPage() {
     return (
       <main className={styles.main}>
         <div className={styles.loadingContainer}>
-          <p>Chargement...</p>
+          <div className={styles.spinner} aria-label="Chargement" />
         </div>
       </main>
     )
@@ -536,6 +643,13 @@ export default function DashboardPage() {
                 </button>
               )}
 
+              <button
+                className={`${styles.navButton} ${activeTab === 'friends' ? styles.navButtonActive : ''}`}
+                onClick={() => setActiveTab('friends')}
+              >
+                <Users size={18} />
+                Mes amis
+              </button>
               <button
                 className={`${styles.navButton} ${activeTab === 'profile' ? styles.navButtonActive : ''}`}
                 onClick={() => setActiveTab('profile')}
@@ -1203,6 +1317,162 @@ export default function DashboardPage() {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'friends' && (
+              <div className={styles.tabContent}>
+                <div className={styles.sectionHeader}>
+                  <h2 className={styles.sectionTitle}>Mes amis</h2>
+                </div>
+
+                <form className={styles.friendSearchForm} onSubmit={handleSearchFriends}>
+                  <div className={styles.friendSearchInputWrap}>
+                    <Search size={16} />
+                    <input
+                      value={friendSearch}
+                      onChange={(e) => setFriendSearch(e.target.value)}
+                      placeholder="Rechercher un profil (pseudo, prénom, nom)"
+                      className={styles.friendSearchInput}
+                    />
+                  </div>
+                  <button className={styles.addButton} type="submit">Rechercher</button>
+                </form>
+
+                {friendSearchLoading && <p className={styles.detailsDate}>Recherche en cours...</p>}
+
+                {friendSearchResults.length > 0 && (
+                  <div className={styles.friendSearchResults}>
+                    {friendSearchResults.map((entry) => (
+                      <div key={`friend-search-${entry.id}`} className={styles.friendSearchCard}>
+                        <div>
+                          <p className={styles.friendSearchName}>{entry.firstName} {entry.lastName}</p>
+                          <p className={styles.friendSearchMeta}>@{entry.username}</p>
+                        </div>
+                        <button
+                          type="button"
+                          className={styles.friendAddButton}
+                          onClick={() => handleAddFriend(entry.id)}
+                          disabled={entry.isFriend}
+                        >
+                          <UserPlus size={14} />
+                          {entry.isFriend ? 'Déjà ami' : 'Ajouter'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className={styles.friendsLayout}>
+                  <aside className={styles.friendsPanel}>
+                    <div className={styles.listsPanelHeader}>
+                      <span>Amis</span>
+                      <span className={styles.listsPanelBadge}>{friends.length}</span>
+                    </div>
+                    {friends.length === 0 ? (
+                      <p className={styles.friendsEmpty}>Aucun ami pour le moment.</p>
+                    ) : (
+                      friends.map((friend) => (
+                        <button
+                          key={`friend-item-${friend.id}`}
+                          type="button"
+                          className={`${styles.friendRow} ${selectedFriendProfile?.user.id === friend.id ? styles.friendRowActive : ''}`}
+                          onClick={() => handleOpenFriendProfile(friend.id)}
+                        >
+                          <span>{friend.firstName} {friend.lastName}</span>
+                          <span className={styles.friendRowUsername}>@{friend.username}</span>
+                        </button>
+                      ))
+                    )}
+                  </aside>
+
+                  <div className={styles.friendsDetail}>
+                    {friendProfileLoading && <p className={styles.detailsDate}>Chargement du profil...</p>}
+
+                    {!friendProfileLoading && !selectedFriendProfile && (
+                      <div className={styles.listsDetailEmpty}>
+                        <Users size={32} />
+                        <p>Sélectionnez un ami pour voir son profil public.</p>
+                      </div>
+                    )}
+
+                    {!friendProfileLoading && selectedFriendProfile && (
+                      <div className={styles.listsDetailInner}>
+                        <div className={styles.selectedListDetails}>
+                          <h3>{selectedFriendProfile.user.firstName} {selectedFriendProfile.user.lastName}</h3>
+                          <p>@{selectedFriendProfile.user.username}</p>
+                          <p className={styles.detailsDate}>Membre depuis {new Date(selectedFriendProfile.user.createdAt).toLocaleDateString('fr-FR')}</p>
+                        </div>
+
+                        <div className={styles.statsLayout}>
+                          <div className={styles.statsMainCard}>
+                            <div className={styles.statsMainHeader}>
+                              <div className={styles.statIcon}><Heart size={26} /></div>
+                              <div>
+                                <p className={styles.statsMainTitle}>Statistiques</p>
+                              </div>
+                            </div>
+                            <div className={styles.statsDualValues}>
+                              <div className={styles.statsDualItem}>
+                                <p className={styles.statsDualLabel}>Restaurants likés</p>
+                                <p className={styles.statsDualValue}>{selectedFriendProfile.stats.likedRestaurants}</p>
+                              </div>
+                              <div className={styles.statsDualDivider} />
+                              <div className={styles.statsDualItem}>
+                                <p className={styles.statsDualLabel}>Hébergements likés</p>
+                                <p className={styles.statsDualValue}>{selectedFriendProfile.stats.likedAccommodations}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className={styles.selectedListGroups}>
+                          <div className={styles.selectedListGroup}>
+                            <h4 className={styles.selectedListGroupTitle}>Restaurants préférés</h4>
+                            {selectedFriendProfile.favoriteRestaurants.length === 0 ? (
+                              <p className={styles.selectedListEmpty}>Aucun restaurant préféré public.</p>
+                            ) : (
+                              <div className={styles.listCardsGrid}>
+                                {selectedFriendProfile.favoriteRestaurants.map((restaurant) => (
+                                  <div key={`friend-resto-${restaurant.id}`} className={styles.listCardWrapper}>
+                                    <RestaurantCard
+                                      restaurant={restaurant}
+                                      compact
+                                      likes={getInitialDashboardRestaurantLikeCount(restaurant)}
+                                      isLiked={isRestaurantLikedByCurrentUser(restaurant.id)}
+                                      onLikeChange={handleFriendRestaurantLikeChange}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className={styles.selectedListGroup}>
+                            <h4 className={styles.selectedListGroupTitle}>Hébergements préférés</h4>
+                            {selectedFriendProfile.favoriteAccommodations.length === 0 ? (
+                              <p className={styles.selectedListEmpty}>Aucun hébergement préféré public.</p>
+                            ) : (
+                              <div className={styles.listCardsGrid}>
+                                {selectedFriendProfile.favoriteAccommodations.map((accommodation) => (
+                                  <div key={`friend-acc-${accommodation.id}`} className={styles.listCardWrapper}>
+                                    <AccommodationCard
+                                      accommodation={accommodation}
+                                      compact
+                                      likes={getInitialDashboardAccommodationLikeCount(accommodation)}
+                                      isFavorited={isAccommodationLikedByCurrentUser(accommodation.id)}
+                                      onToggleFavorite={() => handleFriendAccommodationLikeToggle(accommodation)}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </section>

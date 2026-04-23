@@ -36,6 +36,12 @@ function getCardColor(cuisine: string): string {
   return '#1A1A1A'
 }
 
+function normalizePriceDisplay(value: string): string {
+  return value
+    .replace(/â‚¬/g, '€')
+    .replace(/€/g, '€')
+}
+
 function AwardBadge({ stars, award, green_star }: { stars: number; award: string; green_star: number }) {
   const isBib = award.toLowerCase().includes('bib') || award.toLowerCase().includes('gourmand')
   return (
@@ -74,6 +80,7 @@ export default function RestaurantCard({
   const [carouselOpen, setCarouselOpen] = useState(false)
 
   const { name, address, price, cuisine, description, opening_hours, stars, award, green_star, photos } = restaurant
+  const displayPrice = normalizePriceDisplay(price)
   const fallbackCoverPhoto = (
     restaurant as Restaurant & { photo_url?: string; image_url?: string; photo?: string }
   ).photo_url
@@ -162,7 +169,7 @@ export default function RestaurantCard({
             </button>
 
             <div className={styles.frontBottom}>
-              <span className={styles.price}>{price}</span>
+              <span className={styles.price}>{displayPrice}</span>
               {showLikeButton && onLikeChange && (
                 <button
                   className={`${styles.likeBtn} ${isLiked ? styles.likedActive : ''}`}
@@ -182,7 +189,7 @@ export default function RestaurantCard({
           <div className={styles.backHeader}>
             <AwardBadge stars={stars} award={award} green_star={green_star} />
             <h2 className={styles.backName}>{name}</h2>
-            <p className={styles.backCuisine}>{cuisine} · {price}</p>
+            <p className={styles.backCuisine}>{cuisine} · {displayPrice}</p>
           </div>
 
           <p className={styles.backDescription}>{description}</p>

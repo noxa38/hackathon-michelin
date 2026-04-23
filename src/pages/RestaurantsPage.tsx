@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
-import { Search, ChevronDown, X, Utensils, Award, Coins, Globe, ConciergeBell, Heart } from 'lucide-react'
+import { Search, ChevronDown, ChevronLeft, ChevronRight, X, Utensils, Award, Coins, Globe, ConciergeBell, Heart } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { fetchAllRestaurants } from '../services/restaurant.service'
 import { findOrCreateList, addRestaurantToList, removeRestaurantFromList, getListRestaurants, getLists } from '../services/list.service'
@@ -13,6 +13,7 @@ import michelinBigGourmandIconUrl from '../../img/michelin-big-gourmand-icon.png
 import michelinGreenStarIconUrl from '../../img/michelin-green-star-icon.png'
 
 const RESTAURANTS_LIKED_LIST_NAME = 'Restaurants likés'
+const ITEMS_PER_PAGE = 9
 
 type DistinctionKey = '3' | '2' | '1' | 'bib' | 'green'
 
@@ -215,6 +216,7 @@ export default function RestaurantsPage() {
   const [savedRestaurantIds, setSavedRestaurantIds] = useState<Set<number>>(new Set())
   const [saveTargetRestaurantId, setSaveTargetRestaurantId] = useState<number | null>(null)
   const [saveModalOpen, setSaveModalOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
 
   const distinctionRef = useRef<HTMLDivElement>(null)
   const cuisineRef     = useRef<HTMLDivElement>(null)
@@ -378,6 +380,23 @@ export default function RestaurantsPage() {
       return true
     })
   }, [restaurants, distinctionFilters, cuisineFilters, priceFilters, countryFilters, facilityFilters, search])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+
+  const visibleRestaurants = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE
+    return filtered.slice(start, start + ITEMS_PER_PAGE)
+  }, [filtered, currentPage])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, distinctionFilters, cuisineFilters, priceFilters, countryFilters, facilityFilters])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
 
   function makeToggle<T>(setter: React.Dispatch<React.SetStateAction<T[]>>) {
     return (v: T) => setter(prev => prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v])
@@ -617,19 +636,45 @@ export default function RestaurantsPage() {
           {filtered.length === 0 ? (
             <p className={styles.empty}>Aucun restaurant pour ces filtres.</p>
           ) : (
-            <div className={styles.grid}>
-              {filtered.map(restaurant => (
-                <RestaurantCard
-                  key={restaurant.id}
-                  restaurant={restaurant}
-                  likes={likesById[restaurant.id] ?? getInitialLikeCount(restaurant)}
-                  onLikeChange={handleLikeChange}
-                  isLiked={likedRestaurantIds.has(restaurant.id)}
-                  isSaved={savedRestaurantIds.has(restaurant.id)}
-                  onSaveClick={handleOpenSaveModal}
-                />
-              ))}
-            </div>
+            <>
+              <div className={styles.grid}>
+                {visibleRestaurants.map(restaurant => (
+                  <RestaurantCard
+                    key={restaurant.id}
+                    restaurant={restaurant}
+                    likes={likesById[restaurant.id] ?? getInitialLikeCount(restaurant)}
+                    onLikeChange={handleLikeChange}
+                    isLiked={likedRestaurantIds.has(restaurant.id)}
+                    isSaved={savedRestaurantIds.has(restaurant.id)}
+                    onSaveClick={handleOpenSaveModal}
+                  />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className={styles.pagination}>
+                  <button
+                    type="button"
+                    className={styles.paginationButton}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft size={16} />
+                    Précédent
+                  </button>
+                  <span className={styles.paginationInfo}>Page {currentPage} / {totalPages}</span>
+                  <button
+                    type="button"
+                    className={styles.paginationButton}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Suivant
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

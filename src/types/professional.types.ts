@@ -53,3 +53,22 @@ export interface CreateAdminPayload {
   firstName: string
   lastName: string
 }
+
+export interface AdminManagedUser {
+  id: number
+  email: string
+  username: string
+  firstName: string
+  lastName: string
+  userType: 'individual' | 'professional' | 'admin'
+  createdAt: string
+}
+
+export interface AdminManagedUserPayload {
+  email: string
+  username: string
+  password?: string
+  firstName: string
+  lastName: string
+  userType: 'individual' | 'professional' | 'admin'
+}

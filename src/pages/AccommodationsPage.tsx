@@ -13,13 +13,11 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Database,
   Heart,
   MapPin,
   Phone,
   Search,
   Star,
-  Tags,
   X,
 } from "lucide-react";
 
@@ -145,6 +143,7 @@ import styles from "./AccommodationsPage.module.css";
 import accommodationMichelinStarIconUrl from '../../img/accommodation-michelin-star-icon.svg';
 
 const ACCOMMODATIONS_LIKED_LIST_NAME = "Hébergements likées";
+const DISTINCTION_OPTIONS = ["5", "4", "3", "2", "1"] as const;
 
 function normalizeForSearch(value: string | undefined | null): string {
   if (!value) return "";
@@ -188,12 +187,8 @@ export default function AccommodationsPage() {
 
   const [query, setQuery] = useState("");
   const [cityFilters, setCityFilters] = useState<string[]>([]);
-  const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
-  const [sourceFilters, setSourceFilters] = useState<string[]>([]);
-  const [minRating, setMinRating] = useState("0");
-  const [openMenu, setOpenMenu] = useState<
-    "city" | "category" | "source" | "rating" | null
-  >(null);
+  const [distinctionFilters, setDistinctionFilters] = useState<string[]>([]);
+  const [openMenu, setOpenMenu] = useState<"city" | "distinction" | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedAccommodation, setSelectedAccommodation] =
     useState<Accommodation | null>(null);
@@ -211,15 +206,11 @@ export default function AccommodationsPage() {
   const [saveTargetAccommodationSource, setSaveTargetAccommodationSource] = useState<"hotels" | "accommodations">("hotels");
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const cityRef = useRef<HTMLDivElement>(null);
-  const categoryRef = useRef<HTMLDivElement>(null);
-  const sourceRef = useRef<HTMLDivElement>(null);
-  const ratingRef = useRef<HTMLDivElement>(null);
+  const distinctionRef = useRef<HTMLDivElement>(null);
   const menuRefs = useMemo(
     () => ({
       city: cityRef,
-      category: categoryRef,
-      source: sourceRef,
-      rating: ratingRef,
+      distinction: distinctionRef,
     }),
     [],
   );
@@ -324,14 +315,6 @@ export default function AccommodationsPage() {
     };
   }, [isAnyModalOpen]);
 
-  const categories = useMemo(() => {
-    const allCategories = accommodations
-      .map((a) => a.category)
-      .filter(Boolean)
-      .sort((a, b) => a.localeCompare(b));
-    return ["all", ...new Set(allCategories)];
-  }, [accommodations]);
-
   const cities = useMemo(() => {
     const allCities = accommodations
       .map((a) => a.city)
@@ -376,24 +359,15 @@ export default function AccommodationsPage() {
         (cityName) =>
           normalizeForSearch(a.city) === normalizeForSearch(cityName),
       );
-    const matchesCategory =
-      categoryFilters.length === 0 ||
-      categoryFilters.some(
-        (categoryName) =>
-          normalizeForSearch(a.category) === normalizeForSearch(categoryName),
-      );
-    const matchesSource =
-      sourceFilters.length === 0 ||
-      sourceFilters.some((sourceName) => a.source === sourceName);
-    const currentRating = a.rating_stars ?? a.stars ?? 0;
-    const matchesRating = currentRating >= Number(minRating);
+    const currentRating = Math.round(a.rating_stars ?? a.stars ?? 0);
+    const matchesDistinction =
+      distinctionFilters.length === 0 ||
+      distinctionFilters.includes(String(currentRating));
 
     return (
       matchesQuery &&
       matchesCity &&
-      matchesCategory &&
-      matchesSource &&
-      matchesRating
+      matchesDistinction
     );
   });
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
@@ -402,23 +376,10 @@ export default function AccommodationsPage() {
     (safeCurrentPage - 1) * ITEMS_PER_PAGE,
     safeCurrentPage * ITEMS_PER_PAGE,
   );
-  const visiblePages = useMemo(() => {
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, index) => index + 1);
-    }
-
-    let start = Math.max(1, safeCurrentPage - 2);
-    let end = Math.min(totalPages, safeCurrentPage + 2);
-
-    if (start === 1) end = 5;
-    if (end === totalPages) start = totalPages - 4;
-
-    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
-  }, [safeCurrentPage, totalPages]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [query, cityFilters, categoryFilters, sourceFilters, minRating]);
+  }, [query, cityFilters, distinctionFilters]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -542,15 +503,11 @@ export default function AccommodationsPage() {
   function resetFilters() {
     setQuery("");
     setCityFilters([]);
-    setCategoryFilters([]);
-    setSourceFilters([]);
-    setMinRating("0");
+    setDistinctionFilters([]);
     closeAllFilters();
   }
 
-  function toggleDropdown(
-    target: "city" | "category" | "source" | "rating",
-  ) {
+  function toggleDropdown(target: "city" | "distinction") {
     setOpenMenu((current) => (current === target ? null : target));
   }
 
@@ -566,9 +523,7 @@ export default function AccommodationsPage() {
   const hasFilters =
     query.trim().length > 0 ||
     cityFilters.length > 0 ||
-    categoryFilters.length > 0 ||
-    sourceFilters.length > 0 ||
-    minRating !== "0";
+    distinctionFilters.length > 0;
 
   return (
     <>
@@ -618,10 +573,6 @@ export default function AccommodationsPage() {
                 <p className={styles.statCard}>
                   <span className={styles.statValue}>{premiumCount}</span>
                   <span className={styles.statLabel}>hôtels premium</span>
-                </p>
-                <p className={styles.statCard}>
-                  <span className={styles.statValue}>{filtered.length}</span>
-                  <span className={styles.statLabel}>résultats visibles</span>
                 </p>
               </div>
             )}
@@ -725,100 +676,28 @@ export default function AccommodationsPage() {
         </DropdownFilter>
 
         <DropdownFilter
-          ref={categoryRef}
-          icon={<Tags size={14} />}
-          label="Catégorie"
-          count={categoryFilters.length}
-          isOpen={openMenu === "category"}
-          onToggle={() => toggleDropdown("category")}
-          onClear={() => setCategoryFilters([])}
-          scrollable
-        >
-          {categories
-            .filter((value) => value !== "all")
-            .map((categoryName) => (
-              <label
-                key={categoryName}
-                className={`${styles.dropdownItem} ${
-                  categoryFilters.includes(categoryName)
-                    ? styles.dropdownItemChecked
-                    : ""
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  className={styles.checkbox}
-                  checked={categoryFilters.includes(categoryName)}
-                  onChange={() => makeToggle(setCategoryFilters)(categoryName)}
-                />
-                <span>{categoryName}</span>
-              </label>
-            ))}
-        </DropdownFilter>
-
-        <DropdownFilter
-          ref={sourceRef}
-          icon={<Database size={14} />}
-          label="Source"
-          count={sourceFilters.length}
-          isOpen={openMenu === "source"}
-          onToggle={() => toggleDropdown("source")}
-          onClear={() => setSourceFilters([])}
-        >
-          {[
-            { value: "hotels", label: "Base hotels" },
-            { value: "accommodations", label: "Seed accommodations" },
-          ].map((sourceOption) => (
-            <label
-              key={sourceOption.value}
-              className={`${styles.dropdownItem} ${
-                sourceFilters.includes(sourceOption.value)
-                  ? styles.dropdownItemChecked
-                  : ""
-              }`}
-            >
-              <input
-                type="checkbox"
-                className={styles.checkbox}
-                checked={sourceFilters.includes(sourceOption.value)}
-                onChange={() => makeToggle(setSourceFilters)(sourceOption.value)}
-              />
-              <span>{sourceOption.label}</span>
-            </label>
-          ))}
-        </DropdownFilter>
-
-        <DropdownFilter
-          ref={ratingRef}
+          ref={distinctionRef}
           icon={<Star size={14} />}
-          label="Note"
-          count={minRating !== "0" ? 1 : 0}
-          isOpen={openMenu === "rating"}
-          onToggle={() => toggleDropdown("rating")}
-          onClear={() => setMinRating("0")}
+          label="Distinction"
+          count={distinctionFilters.length}
+          isOpen={openMenu === "distinction"}
+          onToggle={() => toggleDropdown("distinction")}
+          onClear={() => setDistinctionFilters([])}
         >
-          {[
-            { value: "3", label: "3+ étoiles" },
-            { value: "4", label: "4+ étoiles" },
-            { value: "5", label: "5 étoiles" },
-          ].map((ratingOption) => (
+          {DISTINCTION_OPTIONS.map((ratingValue) => (
             <label
-              key={ratingOption.value}
+              key={ratingValue}
               className={`${styles.dropdownItem} ${
-                minRating === ratingOption.value ? styles.dropdownItemChecked : ""
+                distinctionFilters.includes(ratingValue) ? styles.dropdownItemChecked : ""
               }`}
             >
               <input
                 type="checkbox"
                 className={styles.checkbox}
-                checked={minRating === ratingOption.value}
-                onChange={() =>
-                  setMinRating((current) =>
-                    current === ratingOption.value ? "0" : ratingOption.value,
-                  )
-                }
+                checked={distinctionFilters.includes(ratingValue)}
+                onChange={() => makeToggle(setDistinctionFilters)(ratingValue)}
               />
-              <span>{ratingOption.label}</span>
+              <span>{ratingValue} étoile{ratingValue === "1" ? "" : "s"}</span>
             </label>
           ))}
         </DropdownFilter>
@@ -873,27 +752,12 @@ export default function AccommodationsPage() {
                     aria-label="Page précédente"
                   >
                     <ChevronLeft size={16} />
+                    Précédent
                   </button>
 
-                  <div className={styles.paginationPages}>
-                    {visiblePages.map((pageNumber) => (
-                      <button
-                        key={pageNumber}
-                        type="button"
-                        className={`${styles.paginationButton} ${
-                          pageNumber === safeCurrentPage
-                            ? styles.paginationButtonActive
-                            : ""
-                        }`}
-                        onClick={() => setCurrentPage(pageNumber)}
-                        aria-current={
-                          pageNumber === safeCurrentPage ? "page" : undefined
-                        }
-                      >
-                        {pageNumber}
-                      </button>
-                    ))}
-                  </div>
+                  <span className={styles.paginationInfo}>
+                    Page {safeCurrentPage} / {totalPages}
+                  </span>
 
                   <button
                     type="button"
@@ -904,6 +768,7 @@ export default function AccommodationsPage() {
                     disabled={safeCurrentPage === totalPages}
                     aria-label="Page suivante"
                   >
+                    Suivant
                     <ChevronRight size={16} />
                   </button>
                 </nav>

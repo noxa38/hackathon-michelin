@@ -3,7 +3,9 @@ import type {
   ProfessionalRestaurant, 
   ProfessionalFormData,
   AdminStatistics,
-  CreateAdminPayload
+  CreateAdminPayload,
+  AdminManagedUser,
+  AdminManagedUserPayload,
 } from '../types/professional.types'
 
 const API_BASE = '/api'
@@ -153,4 +155,76 @@ export async function updateProfessionalRestaurant(
   }
 
   return response.json()
+}
+
+export async function getAdminUsers(token: string): Promise<AdminManagedUser[]> {
+  const response = await fetch(`${API_BASE}/admin/users`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || 'Failed to fetch users')
+  }
+
+  return response.json()
+}
+
+export async function createAdminManagedUser(
+  token: string,
+  data: AdminManagedUserPayload
+): Promise<AdminManagedUser> {
+  const response = await fetch(`${API_BASE}/admin/users`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || 'Failed to create user')
+  }
+
+  return response.json()
+}
+
+export async function updateAdminManagedUser(
+  token: string,
+  userId: number,
+  data: Partial<AdminManagedUserPayload>
+): Promise<AdminManagedUser> {
+  const response = await fetch(`${API_BASE}/admin/users/${userId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || 'Failed to update user')
+  }
+
+  return response.json()
+}
+
+export async function deleteAdminManagedUser(token: string, userId: number): Promise<void> {
+  const response = await fetch(`${API_BASE}/admin/users/${userId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.message || 'Failed to delete user')
+  }
 }

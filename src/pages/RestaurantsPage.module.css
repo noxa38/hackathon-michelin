@@ -296,12 +296,13 @@
 /* ── Barre de filtres globale ─────────────────────────────── */
 .filterBar {
   width: min(1200px, 100%);
-  margin: 0 auto;
+  margin: 16px auto 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
   background: #ffffff;
   flex-wrap: wrap;
 }
@@ -600,11 +601,60 @@
   gap: 16px;
 }
 
+.pagination {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 0 16px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paginationButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #334155;
+  font-family: var(--font-family);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.paginationButton:hover:not(:disabled) {
+  border-color: var(--color-red);
+  color: var(--color-red);
+}
+
+.paginationButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.paginationInfo {
+  font-size: 0.84rem;
+  color: #475569;
+  font-weight: 600;
+}
+
 @media (min-width: 768px) {
   .grid {
     padding: 24px;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
+  }
+
+  .pagination {
+    padding: 0 24px 10px;
+    justify-content: flex-end;
   }
 }
 
@@ -613,6 +663,10 @@
     padding: 24px 40px;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
+  }
+
+  .pagination {
+    padding: 0 40px 12px;
   }
 }
 

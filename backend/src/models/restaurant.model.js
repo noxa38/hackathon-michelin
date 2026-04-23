@@ -97,3 +97,51 @@ export async function getNearbyRestaurants(
   );
   return rows;
 }
+
+export async function createRestaurant(payload) {
+  const [result] = await pool.execute(
+    `INSERT INTO restaurants
+      (name, address, location, city, country, price, cuisine, longitude, latitude,
+       phone_number, michelin_url, website_url, award, stars, green_star,
+       facilities, description, opening_hours)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      payload.name,
+      payload.address ?? null,
+      payload.location ?? null,
+      payload.city ?? null,
+      payload.country ?? null,
+      payload.price ?? null,
+      payload.cuisine ?? null,
+      payload.longitude ?? null,
+      payload.latitude ?? null,
+      payload.phone_number ?? null,
+      payload.michelin_url ?? null,
+      payload.website_url ?? null,
+      payload.award ?? null,
+      payload.stars ?? 0,
+      payload.green_star ?? 0,
+      payload.facilities ?? null,
+      payload.description ?? null,
+      payload.opening_hours ?? null,
+    ],
+  );
+  return Number(result.insertId);
+}
+
+export async function updateRestaurant(id, payload) {
+  const entries = Object.entries(payload).filter(([, value]) => value !== undefined);
+  if (!entries.length) return;
+
+  const fields = entries.map(([key]) => `${key} = ?`).join(', ');
+  const values = entries.map(([, value]) => value);
+
+  await pool.execute(
+    `UPDATE restaurants SET ${fields} WHERE id = ?`,
+    [...values, id],
+  );
+}
+
+export async function deleteRestaurant(id) {
+  await pool.execute('DELETE FROM restaurants WHERE id = ?', [id]);
+}

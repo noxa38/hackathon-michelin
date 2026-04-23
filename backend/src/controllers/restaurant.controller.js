@@ -2,7 +2,10 @@ import {
   getAllRestaurants,
   searchRestaurants,
   getRestaurantById,
-  getNearbyRestaurants
+  getNearbyRestaurants,
+  createRestaurant,
+  updateRestaurant,
+  deleteRestaurant,
 } from '../models/restaurant.model.js'
 
 export async function search(req, res) {
@@ -33,4 +36,65 @@ export async function nearby(req, res) {
 
   const results = await getNearbyRestaurants(latitude, longitude, radiusKm, limit)
   res.json(results)
+}
+
+export async function createByAdmin(req, res) {
+  try {
+    const { name } = req.body
+    if (!name || !String(name).trim()) {
+      return res.status(400).json({ message: 'Le nom est requis' })
+    }
+
+    const newId = await createRestaurant({
+      ...req.body,
+      name: String(name).trim(),
+    })
+
+    const restaurant = await getRestaurantById(newId)
+    return res.status(201).json(restaurant)
+  } catch (error) {
+    console.error('Admin create restaurant error:', error)
+    return res.status(500).json({ message: 'Erreur lors de la création du restaurant' })
+  }
+}
+
+export async function updateByAdmin(req, res) {
+  try {
+    const restaurantId = Number(req.params.id)
+    if (!Number.isFinite(restaurantId)) {
+      return res.status(400).json({ message: 'ID restaurant invalide' })
+    }
+
+    const existing = await getRestaurantById(restaurantId)
+    if (!existing) {
+      return res.status(404).json({ message: 'Restaurant introuvable' })
+    }
+
+    await updateRestaurant(restaurantId, req.body)
+    const updated = await getRestaurantById(restaurantId)
+    return res.json(updated)
+  } catch (error) {
+    console.error('Admin update restaurant error:', error)
+    return res.status(500).json({ message: 'Erreur lors de la mise à jour du restaurant' })
+  }
+}
+
+export async function deleteByAdmin(req, res) {
+  try {
+    const restaurantId = Number(req.params.id)
+    if (!Number.isFinite(restaurantId)) {
+      return res.status(400).json({ message: 'ID restaurant invalide' })
+    }
+
+    const existing = await getRestaurantById(restaurantId)
+    if (!existing) {
+      return res.status(404).json({ message: 'Restaurant introuvable' })
+    }
+
+    await deleteRestaurant(restaurantId)
+    return res.status(204).send()
+  } catch (error) {
+    console.error('Admin delete restaurant error:', error)
+    return res.status(500).json({ message: 'Erreur lors de la suppression du restaurant' })
+  }
 }

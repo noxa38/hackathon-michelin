@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS restaurant_photos;
 DROP TABLE IF EXISTS hotel_rooms;
 DROP TABLE IF EXISTS accommodation_favorites;
 DROP TABLE IF EXISTS favorites;
+DROP TABLE IF EXISTS friendships;
 DROP TABLE IF EXISTS accommodations;
 DROP TABLE IF EXISTS restaurants;
 DROP TABLE IF EXISTS hotels;
@@ -35,6 +36,20 @@ CREATE TABLE users (
   last_name  VARCHAR(100),
   user_type  ENUM('individual', 'professional', 'admin') DEFAULT 'individual',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- FRIENDSHIPS table
+-- ============================================================
+
+CREATE TABLE friendships (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT NOT NULL,
+  friend_id  INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_friendships_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_friendships_friend FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_friendship (user_id, friend_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

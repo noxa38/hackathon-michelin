@@ -321,6 +321,80 @@ class User {
       throw err;
     }
   }
+
+  static async getAdminManagedUsers() {
+    try {
+      const [rows] = await db.query(
+        `SELECT id,
+                email,
+                username,
+                first_name,
+                last_name,
+                user_type,
+                created_at
+         FROM users
+         ORDER BY created_at DESC, id DESC`
+      );
+      return rows;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  static async createUserByAdmin(data) {
+    try {
+      const result = await db.query(
+        `INSERT INTO users (email, username, password, first_name, last_name, user_type)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          data.email,
+          data.username,
+          data.password,
+          data.firstName,
+          data.lastName,
+          data.userType,
+        ]
+      );
+      return result[0];
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  static async updateUserByAdmin(id, data) {
+    const fields = [];
+    const values = [];
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (value === undefined) return;
+      const dbKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+      fields.push(`${dbKey} = ?`);
+      values.push(value);
+    });
+
+    if (!fields.length) return;
+
+    values.push(id);
+
+    try {
+      const result = await db.query(
+        `UPDATE users SET ${fields.join(", ")} WHERE id = ?`,
+        values
+      );
+      return result[0];
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  static async deleteUserByAdmin(id) {
+    try {
+      const result = await db.query("DELETE FROM users WHERE id = ?", [id]);
+      return result[0];
+    } catch (err) {
+      throw err;
+    }
+  }
 }
 
 export default User;

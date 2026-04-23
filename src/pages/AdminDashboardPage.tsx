@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Users,
   Building2,
   Hotel,
-  Loader,
   AlertCircle,
   Home,
   FileText,
@@ -17,17 +16,29 @@ import {
 import { useAuth } from '../contexts/AuthContext'
 import * as authService from '../services/auth.service'
 import * as professionalService from '../services/professional.service'
+import AdminEstablishmentsManager from '../components/features/AdminEstablishmentsManager'
+import AdminUsersManager from '../components/features/AdminUsersManager'
 import ProfessionalRequestsManager from '../components/features/ProfessionalRequestsManager'
 import { type User as UserType } from '../types/auth.types'
 import { type AdminStatistics } from '../types/professional.types'
 import styles from './AdminDashboardPage.module.css'
 
-type AdminTab = 'home' | 'requests' | 'profile'
+type AdminTab = 'home' | 'requests' | 'establishments' | 'users' | 'profile'
+
+function getTabFromQuery(value: string | null): AdminTab {
+  if (value === 'requests') return 'requests'
+  if (value === 'establishments') return 'establishments'
+  if (value === 'users') return 'users'
+  if (value === 'profile') return 'profile'
+  return 'home'
+}
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabFromQuery = getTabFromQuery(searchParams.get('tab'))
   const { user, logout, updateUser } = useAuth()
-  const [activeTab, setActiveTab] = useState<AdminTab>('home')
+  const [activeTab, setActiveTab] = useState<AdminTab>(tabFromQuery)
   const [profileUser, setProfileUser] = useState<UserType | null>(user)
   const [editingProfile, setEditingProfile] = useState(false)
   const [profileData, setProfileData] = useState({ firstName: '', lastName: '', email: '' })
@@ -39,6 +50,21 @@ export default function AdminDashboardPage() {
   const [refreshKey, setRefreshKey] = useState(0)
 
   const token = localStorage.getItem('auth_token')
+
+  useEffect(() => {
+    if (tabFromQuery !== activeTab) {
+      setActiveTab(tabFromQuery)
+    }
+  }, [tabFromQuery, activeTab])
+
+  function handleTabChange(tab: AdminTab) {
+    setActiveTab(tab)
+    if (tab === 'home') {
+      setSearchParams({})
+      return
+    }
+    setSearchParams({ tab })
+  }
 
   useEffect(() => {
     if (token) {
@@ -150,7 +176,7 @@ export default function AdminDashboardPage() {
           <nav className={styles.nav}>
             <button
               className={`${styles.navButton} ${activeTab === 'home' ? styles.navButtonActive : ''}`}
-              onClick={() => setActiveTab('home')}
+              onClick={() => handleTabChange('home')}
             >
               <Home size={18} />
               Tableau de bord
@@ -158,15 +184,31 @@ export default function AdminDashboardPage() {
 
             <button
               className={`${styles.navButton} ${activeTab === 'requests' ? styles.navButtonActive : ''}`}
-              onClick={() => setActiveTab('requests')}
+              onClick={() => handleTabChange('requests')}
             >
               <FileText size={18} />
               Demandes administratives
             </button>
 
             <button
+              className={`${styles.navButton} ${activeTab === 'establishments' ? styles.navButtonActive : ''}`}
+              onClick={() => handleTabChange('establishments')}
+            >
+              <Building2 size={18} />
+              Fiches établissements
+            </button>
+
+            <button
+              className={`${styles.navButton} ${activeTab === 'users' ? styles.navButtonActive : ''}`}
+              onClick={() => handleTabChange('users')}
+            >
+              <Users size={18} />
+              Utilisateurs
+            </button>
+
+            <button
               className={`${styles.navButton} ${activeTab === 'profile' ? styles.navButtonActive : ''}`}
-              onClick={() => setActiveTab('profile')}
+              onClick={() => handleTabChange('profile')}
             >
               <User size={18} />
               Mon profil
@@ -195,7 +237,7 @@ export default function AdminDashboardPage() {
 
               {loadingStats ? (
                 <div className={styles.loading}>
-                  <Loader size={32} className={styles.spinner} />
+                  <div className={styles.spinner} aria-label="Chargement" />
                   <p>Chargement des statistiques...</p>
                 </div>
               ) : statistics ? (
@@ -265,47 +307,65 @@ export default function AdminDashboardPage() {
 
               {loadingProfile ? (
                 <div className={styles.loading}>
-                  <Loader size={32} className={styles.spinner} />
+                  <div className={styles.spinner} aria-label="Chargement" />
                   <p>Chargement du profil...</p>
                 </div>
               ) : displayUser ? (
                 <div className={styles.profileCard}>
-                  <div className={styles.profileAvatar}>
-                    {displayUser.firstName?.[0]}
-                    {displayUser.lastName?.[0]}
+                  <div className={styles.profileCardHeader}>
+                    <div className={styles.profileAvatar}>
+                      {displayUser.firstName?.[0]}
+                      {displayUser.lastName?.[0]}
+                    </div>
+                    <div>
+                      <p className={styles.profileCardTitle}>{displayUser.firstName} {displayUser.lastName}</p>
+                      <p className={styles.profileCardSubtitle}>@{displayUser.username}</p>
+                    </div>
                   </div>
 
                   <div className={styles.profileInfo}>
                     {editingProfile ? (
                       <>
-                        <div className={styles.profileField}>
-                          <label>Prénom</label>
-                          <input
-                            type="text"
-                            value={profileData.firstName}
-                            onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
-                            className={styles.profileInput}
-                          />
-                        </div>
+                        <div className={styles.profileFields}>
+                          <div className={styles.profileField}>
+                            <span className={styles.profileLabel}>Prénom</span>
+                            <input
+                              type="text"
+                              value={profileData.firstName}
+                              onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                              className={styles.profileInput}
+                            />
+                          </div>
 
-                        <div className={styles.profileField}>
-                          <label>Nom</label>
-                          <input
-                            type="text"
-                            value={profileData.lastName}
-                            onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
-                            className={styles.profileInput}
-                          />
-                        </div>
+                          <div className={styles.profileField}>
+                            <span className={styles.profileLabel}>Nom</span>
+                            <input
+                              type="text"
+                              value={profileData.lastName}
+                              onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
+                              className={styles.profileInput}
+                            />
+                          </div>
 
-                        <div className={styles.profileField}>
-                          <label>Email</label>
-                          <input
-                            type="email"
-                            value={profileData.email}
-                            onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
-                            className={styles.profileInput}
-                          />
+                          <div className={styles.profileField}>
+                            <span className={styles.profileLabel}>Pseudo</span>
+                            <input
+                              type="text"
+                              value={displayUser.username}
+                              disabled
+                              className={styles.profileInput}
+                            />
+                          </div>
+
+                          <div className={styles.profileField}>
+                            <span className={styles.profileLabel}>Email</span>
+                            <input
+                              type="email"
+                              value={profileData.email}
+                              onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                              className={styles.profileInput}
+                            />
+                          </div>
                         </div>
 
                         <div className={styles.profileActions}>
@@ -325,44 +385,63 @@ export default function AdminDashboardPage() {
                       </>
                     ) : (
                       <>
-                        <div className={styles.profileField}>
-                          <label>Prénom</label>
-                          <p>{displayUser.firstName}</p>
-                        </div>
+                        <div className={styles.profileFields}>
+                          <div className={styles.profileField}>
+                            <span className={styles.profileLabel}>Prénom</span>
+                            <span className={styles.profileValue}>{displayUser.firstName}</span>
+                          </div>
 
-                        <div className={styles.profileField}>
-                          <label>Nom</label>
-                          <p>{displayUser.lastName}</p>
-                        </div>
+                          <div className={styles.profileField}>
+                            <span className={styles.profileLabel}>Nom</span>
+                            <span className={styles.profileValue}>{displayUser.lastName}</span>
+                          </div>
 
-                        <div className={styles.profileField}>
-                          <label className={styles.fieldLabelWithIcon}>
-                            <Mail size={16} />
-                            Email
-                          </label>
-                          <p>{displayUser.email}</p>
-                        </div>
+                          <div className={styles.profileField}>
+                            <span className={styles.profileLabel}>Pseudo</span>
+                            <span className={styles.profileValue}>{displayUser.username}</span>
+                          </div>
 
-                        <div className={styles.profileField}>
-                          <label className={styles.fieldLabelWithIcon}>
-                            <Calendar size={16} />
-                            Membre depuis
-                          </label>
-                          <p>{new Date(displayUser.createdAt).toLocaleDateString('fr-FR')}</p>
+                          <div className={styles.profileField}>
+                            <span className={styles.fieldLabelWithIcon}>
+                              <Mail size={14} />
+                              Email
+                            </span>
+                            <span className={styles.profileValue}>{displayUser.email}</span>
+                          </div>
+
+                          <div className={styles.profileField}>
+                            <span className={styles.fieldLabelWithIcon}>
+                              <Calendar size={14} />
+                              Membre depuis
+                            </span>
+                            <span className={styles.profileValue}>{new Date(displayUser.createdAt).toLocaleDateString('fr-FR')}</span>
+                          </div>
                         </div>
 
                         <button
                           className={styles.editProfileButton}
                           onClick={() => setEditingProfile(true)}
                         >
-                          <Edit2 size={18} />
-                          Éditer le profil
+                          <Edit2 size={16} />
+                          Modifier
                         </button>
                       </>
                     )}
                   </div>
                 </div>
               ) : null}
+            </div>
+          )}
+
+          {activeTab === 'establishments' && token && (
+            <div className={styles.tabContent}>
+              <AdminEstablishmentsManager token={token} />
+            </div>
+          )}
+
+          {activeTab === 'users' && token && (
+            <div className={styles.tabContent}>
+              <AdminUsersManager token={token} currentUserId={displayUser?.id} />
             </div>
           )}
         </section>

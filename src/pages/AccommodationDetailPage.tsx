@@ -374,7 +374,9 @@ export default function AccommodationDetailPage() {
   if (loading) {
     return (
       <main className={styles.main}>
-        <div className={styles.state}>Chargement de la fiche détaillée...</div>
+        <div className={`${styles.state} ${styles.stateLoading}`}>
+          <div className={styles.spinner} aria-label="Chargement" />
+        </div>
       </main>
     );
   }

@@ -42,17 +42,17 @@ INSERT INTO restaurants (name, address, location, city, country, price, cuisine,
 ('Flocons de Sel', 'MegÃƒÂ¨ve', 'MegÃƒÂ¨ve', 'MegÃƒÂ¨ve', 'France', '€€€€', 'Mountain', 6.62, 45.85, '+33450213449', 'https://guide.michelin.com', 'https://www.floconsdesel.com', '3 Stars', 3, 0, 'Great view', 'Alpine gastronomy', '{"Mon":"closed","Tue":"12h-13h"}'),
 ('Oustau de BaumaniÃƒÂ¨re', 'Les Baux', 'Les Baux', 'Les Baux', 'France', '€€€€', 'ProvenÃƒÂ§al', 4.80, 43.74, '+33490543307', 'https://guide.michelin.com', 'https://www.baumaniere.com', '2 Stars', 2, 0, 'Garden', 'ProvenÃƒÂ§al cuisine', '{"Mon":"12h-14h","Tue":"12h-14h"}');
 
-INSERT INTO hotels (name, address, city, country, latitude, longitude, stars, phone, description, facilities, price_from) VALUES
-('Hotel Le Bristol', 'Paris', 'Paris', 'France', 48.87, 2.31, 5, '+33153434300', 'Luxury palace hotel', 'Spa,Restaurant', 450),
-('Villa Copenhagen', 'Copenhagen', 'Copenhagen', 'Denmark', 55.68, 12.57, 4, '+4533333600', 'Boutique harbor hotel', 'Restaurant,Bar', 280),
-('Hotel Adlon Kempinski', 'Berlin', 'Berlin', 'Germany', 52.52, 13.39, 5, '+493022610', 'Historic luxury hotel', 'Spa,Restaurant', 380),
-('The Savoy', 'London', 'London', 'United Kingdom', 51.51, -0.12, 5, '+442073363100', 'Art Deco on Thames', 'Spa,Restaurant', 420),
-('Grand Hotel Stockholm', 'Stockholm', 'Stockholm', 'Sweden', 59.33, 18.08, 5, '+468679580', 'Harbor views elegance', 'Restaurant,Bar', 350),
-('Hotel Alfonso XIII', 'Seville', 'Seville', 'Spain', 37.39, -5.98, 5, '+34954917000', 'Palace hotel elegance', 'Restaurant,Bar', 320),
-('Mandarin Oriental', 'Barcelona', 'Barcelona', 'Spain', 41.39, 2.17, 5, '+34932151900', 'Ultra-luxury location', 'Spa,Restaurant', 400),
-('Badrutt Palace Hotel', 'St. Moritz', 'St. Moritz', 'Switzerland', 46.50, 10.33, 5, '+41818372000', 'Alpine palace since 1896', 'Spa,Restaurant', 500),
-('Aman Venice', 'Venice', 'Venice', 'Italy', 45.44, 12.32, 5, '+390412411811', 'Venetian palazzo luxury', 'Restaurant,Bar', 550),
-('Four Seasons Firenze', 'Florence', 'Florence', 'Italy', 43.77, 11.28, 5, '+390552623700', 'Renaissance palazzo', 'Spa,Restaurant', 380);
+INSERT INTO hotels (name, address, city, country, latitude, longitude, stars, phone, description, facilities, price_from, photo_url) VALUES
+('Hotel Le Bristol', 'Paris', 'Paris', 'France', 48.87, 2.31, 5, '+33153434300', 'Luxury palace hotel', 'Spa,Restaurant', 450, 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&h=900&fit=crop'),
+('Villa Copenhagen', 'Copenhagen', 'Copenhagen', 'Denmark', 55.68, 12.57, 4, '+4533333600', 'Boutique harbor hotel', 'Restaurant,Bar', 280, 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&h=900&fit=crop'),
+('Hotel Adlon Kempinski', 'Berlin', 'Berlin', 'Germany', 52.52, 13.39, 5, '+493022610', 'Historic luxury hotel', 'Spa,Restaurant', 380, 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&h=900&fit=crop'),
+('The Savoy', 'London', 'London', 'United Kingdom', 51.51, -0.12, 5, '+442073363100', 'Art Deco on Thames', 'Spa,Restaurant', 420, 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1200&h=900&fit=crop'),
+('Grand Hotel Stockholm', 'Stockholm', 'Stockholm', 'Sweden', 59.33, 18.08, 5, '+468679580', 'Harbor views elegance', 'Restaurant,Bar', 350, 'https://images.unsplash.com/photo-1590080876-5b60b0ce2c2e?w=1200&h=900&fit=crop'),
+('Hotel Alfonso XIII', 'Seville', 'Seville', 'Spain', 37.39, -5.98, 5, '+34954917000', 'Palace hotel elegance', 'Restaurant,Bar', 320, 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&h=900&fit=crop'),
+('Mandarin Oriental', 'Barcelona', 'Barcelona', 'Spain', 41.39, 2.17, 5, '+34932151900', 'Ultra-luxury location', 'Spa,Restaurant', 400, 'https://images.unsplash.com/photo-1571896635906-29c2b02f04f7?w=1200&h=900&fit=crop'),
+('Badrutt Palace Hotel', 'St. Moritz', 'St. Moritz', 'Switzerland', 46.50, 10.33, 5, '+41818372000', 'Alpine palace since 1896', 'Spa,Restaurant', 500, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=900&fit=crop'),
+('Aman Venice', 'Venice', 'Venice', 'Italy', 45.44, 12.32, 5, '+390412411811', 'Venetian palazzo luxury', 'Restaurant,Bar', 550, 'https://images.unsplash.com/photo-1578821168017-ecc01b0ab28f?w=1200&h=900&fit=crop'),
+('Four Seasons Firenze', 'Florence', 'Florence', 'Italy', 43.77, 11.28, 5, '+390552623700', 'Renaissance palazzo', 'Spa,Restaurant', 380, 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&h=900&fit=crop');
 
 INSERT INTO hotel_rooms (hotel_id, room_type, description, price_per_night, capacity, amenities) SELECT id, 'Deluxe', 'Spacious elegant room', 450, 2, 'Marble bathroom,Premium bedding' FROM hotels WHERE name = 'Hotel Le Bristol';
 INSERT INTO hotel_rooms (hotel_id, room_type, description, price_per_night, capacity, amenities) SELECT id, 'Suite', 'Luxury suite', 800, 2, 'Separate living,Marble bathroom' FROM hotels WHERE name = 'Hotel Le Bristol';

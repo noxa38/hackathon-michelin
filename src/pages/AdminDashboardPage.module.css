@@ -186,16 +186,16 @@
 }
 
 .spinner {
-  animation: spin 1s linear infinite;
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e8e8e8;
+  border-top-color: var(--color-red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .error {
@@ -261,56 +261,128 @@
 .profileCard {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
-  background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 8px;
-  max-width: 720px;
+  gap: 20px;
+  width: 100%;
+  padding: 28px 32px;
+  background: linear-gradient(165deg, #ffffff 0%, #fbfbfb 100%);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+  @media (max-width: 900px) {
+    padding: 20px 22px;
+  }
+
+  @media (max-width: 640px) {
+    gap: 14px;
+    padding: 14px;
+    border-radius: 10px;
+  }
+}
+
+.profileCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .profileAvatar {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
-  background: rgba(0, 0, 0, 0.05);
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, rgba(228, 0, 43, 0.12) 0%, rgba(228, 0, 43, 0.06) 100%);
   border-radius: 50%;
-  color: var(--color-black);
+  color: var(--color-red);
   font-size: 18px;
-  font-weight: 600;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(228, 0, 43, 0.2);
+
+  @media (max-width: 640px) {
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
+  }
+}
+
+.profileCardTitle {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-black);
+}
+
+.profileCardSubtitle {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.5);
 }
 
 .profileInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: contents;
+}
+
+.profileFields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 16px;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 
 .profileField {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  background: #fff;
+
+  @media (max-width: 640px) {
+    padding: 9px 10px;
+  }
 }
 
-.profileField label {
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.6);
+.profileLabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+  color: rgba(0, 0, 0, 0.55);
+  font-weight: 600;
 }
 
-.profileField p {
-  margin: 0;
-  font-size: 0.95rem;
+.profileValue {
+  font-size: 0.9rem;
+  line-height: 1.35;
   color: var(--color-black);
+  word-break: break-word;
+
+  @media (max-width: 640px) {
+    font-size: 0.87rem;
+  }
 }
 
 .fieldLabelWithIcon {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+  color: rgba(0, 0, 0, 0.55);
+  font-weight: 600;
 }
 
 .profileInput {
@@ -329,40 +401,60 @@
   border-color: var(--color-red);
 }
 
+.profileInput:disabled {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.5);
+  cursor: not-allowed;
+}
+
 .editProfileButton {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 9px 12px;
+  width: fit-content;
+  max-width: max-content;
+  align-self: flex-start;
+  padding: 9px 16px;
   background: var(--color-red);
   border: none;
   border-radius: 6px;
   color: #fff;
   font-size: 0.86rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  align-self: flex-start;
 }
 
 .editProfileButton:hover {
   background-color: #dc4a56;
 }
 
+@media (max-width: 640px) {
+  .editProfileButton {
+    justify-content: center;
+    align-self: flex-start;
+  }
+}
+
 .profileActions {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  justify-content: flex-start;
 
   @media (max-width: 640px) {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding-top: 8px;
+    margin-top: 2px;
   }
 }
 
 .profileSaveButton,
 .profileCancelButton {
-  flex: 1;
   padding: 9px 12px;
   border: none;
   border-radius: 4px;
@@ -389,4 +481,14 @@
 
 .profileCancelButton:hover {
   background-color: rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 640px) {
+  .profileActions .editProfileButton,
+  .profileActions .profileSaveButton,
+  .profileActions .profileCancelButton {
+    width: fit-content;
+    justify-content: center;
+    align-self: flex-start;
+  }
 }

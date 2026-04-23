@@ -199,3 +199,167 @@ export const updateProfessionalRestaurant = async (req, res) => {
     res.status(500).json({ message: "Failed to update restaurant", error: err.message });
   }
 };
+
+/**
+ * List users (admin only)
+ * GET /api/admin/users
+ */
+export const getAdminUsers = async (_req, res) => {
+  try {
+    const users = await User.getAdminManagedUsers();
+    res.status(200).json(users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      firstName: user.first_name,
+      lastName: user.last_name,
+      userType: user.user_type,
+      createdAt: user.created_at,
+    })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch users", error: err.message });
+  }
+};
+
+/**
+ * Create user (admin only)
+ * POST /api/admin/users
+ */
+export const createAdminManagedUser = async (req, res) => {
+  try {
+    const { email, username, password, firstName, lastName, userType } = req.body;
+
+    if (!email || !username || !password || !firstName || !lastName || !userType) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!["individual", "professional", "admin"].includes(userType)) {
+      return res.status(400).json({ message: "Invalid user type" });
+    }
+
+    const existingUser = await User.findByEmail(email);
+    if (existingUser) {
+      return res.status(400).json({ message: "User with this email already exists" });
+    }
+
+    const existingUsername = await User.findByUsername(username);
+    if (existingUsername) {
+      return res.status(400).json({ message: "Username already taken" });
+    }
+
+    const hashedPassword = await User.hashPassword(password);
+    const result = await User.createUserByAdmin({
+      email,
+      username,
+      password: hashedPassword,
+      firstName,
+      lastName,
+      userType,
+    });
+
+    const createdUser = await User.findById(result.insertId);
+    return res.status(201).json({
+      id: createdUser.id,
+      email: createdUser.email,
+      username: createdUser.username,
+      firstName: createdUser.first_name,
+      lastName: createdUser.last_name,
+      userType: createdUser.user_type,
+      createdAt: createdUser.created_at,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to create user", error: err.message });
+  }
+};
+
+/**
+ * Update user (admin only)
+ * PUT /api/admin/users/:id
+ */
+export const updateAdminManagedUser = async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    if (!Number.isFinite(userId)) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const { email, username, password, firstName, lastName, userType } = req.body;
+
+    if (email && email !== existingUser.email) {
+      const conflictEmail = await User.findByEmail(email);
+      if (conflictEmail && conflictEmail.id !== userId) {
+        return res.status(400).json({ message: "User with this email already exists" });
+      }
+    }
+
+    if (username && username !== existingUser.username) {
+      const conflictUsername = await User.findByUsername(username);
+      if (conflictUsername && conflictUsername.id !== userId) {
+        return res.status(400).json({ message: "Username already taken" });
+      }
+    }
+
+    if (userType && !["individual", "professional", "admin"].includes(userType)) {
+      return res.status(400).json({ message: "Invalid user type" });
+    }
+
+    const updateData = {
+      email,
+      username,
+      firstName,
+      lastName,
+      userType,
+      password: password ? await User.hashPassword(password) : undefined,
+    };
+
+    await User.updateUserByAdmin(userId, updateData);
+    const updatedUser = await User.findById(userId);
+    return res.status(200).json({
+      id: updatedUser.id,
+      email: updatedUser.email,
+      username: updatedUser.username,
+      firstName: updatedUser.first_name,
+      lastName: updatedUser.last_name,
+      userType: updatedUser.user_type,
+      createdAt: updatedUser.created_at,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to update user", error: err.message });
+  }
+};
+
+/**
+ * Delete user (admin only)
+ * DELETE /api/admin/users/:id
+ */
+export const deleteAdminManagedUser = async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    if (!Number.isFinite(userId)) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+
+    if (req.user.id === userId) {
+      return res.status(400).json({ message: "You cannot delete your own account" });
+    }
+
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await User.deleteUserByAdmin(userId);
+    return res.status(204).send();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete user", error: err.message });
+  }
+};
