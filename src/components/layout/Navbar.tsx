@@ -34,23 +34,19 @@ export default function Navbar({ isAuthenticated = false }: Props) {
           <nav className={styles.nav} aria-label="Navigation principale">
             <Link to="/restaurants" className={`${styles.navLink} ${pathname === '/restaurants' ? styles.navLinkActive : ''}`}>Restaurants</Link>
             <Link to="/hebergements" className={`${styles.navLink} ${pathname === '/hebergements' ? styles.navLinkActive : ''}`}>Hébergements</Link>
-            <Link 
-              to={isAuthenticated ? '/dashboard' : '#'}
-              onClick={handleAccountClick}
-              className={`${styles.navLink} ${pathname === '/dashboard' && isAuthenticated ? styles.navLinkActive : ''}`}
-            >
-              Mon compte
-            </Link>
+            {isAuthenticated && (
+              <Link 
+                to="/dashboard"
+                className={`${styles.navLink} ${pathname === '/dashboard' ? styles.navLinkActive : ''}`}
+              >
+                Mon compte
+              </Link>
+            )}
           </nav>
 
           <div className={styles.actions}>
             {isAuthenticated ? (
               <>
-                {pathname !== '/dashboard' && (
-                  <Link to="/dashboard" className={styles.profileButton} aria-label="Mon profil">
-                    <UserCircle size={26} />
-                  </Link>
-                )}
                 <button className={styles.logoutButton} onClick={handleLogout} aria-label="Déconnexion">
                   <LogOut size={20} />
                 </button>

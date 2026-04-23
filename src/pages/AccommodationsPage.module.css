@@ -5,15 +5,15 @@
 }
 
 .header {
-  padding: 24px 16px 0;
+  padding: 40px 16px 24px;
+  background: #ffffff;
+  color: #0f172a;
 }
 
 .headerShell {
   width: min(1200px, 100%);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
+  display: block;
 }
 
 .headerContent {
@@ -164,17 +164,15 @@
 .galleryBadge {
   position: absolute;
   left: 12px;
-  bottom: 12px;
+  top: 12px;
   z-index: 1;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  background: rgba(15, 23, 42, 0.5);
-  color: #ffffff;
+  border: 1px solid #dbe4ef;
+  background: #ffffff;
+  color: #0f172a;
   font-size: 0.74rem;
-  font-weight: 600;
+  font-weight: 700;
   padding: 5px 10px;
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
 }
 
 .toolbar {
@@ -310,6 +308,134 @@
 .chevron {
   transition: transform 0.2s ease;
   flex-shrink: 0;
+}
+
+
+/* ── Carousel top-liked ── */
+.headerCarouselWrap {
+  width: min(1200px, 100%);
+  margin: 14px auto 0;
+}
+
+.headerCarousel {
+  position: relative;
+  border: 1px solid #dbe4ef;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.09);
+  min-height: 260px;
+  padding: 48px 12px 12px;
+}
+
+
+
+.carouselTrack {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.carouselTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselCard {
+  position: relative;
+  flex-shrink: 0;
+  min-width: 220px;
+  height: 210px;
+  border-radius: 14px;
+  overflow: hidden;
+  scroll-snap-align: start;
+  background: #1e293b;
+}
+
+.carouselPhoto {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.carouselCard:hover .carouselPhoto {
+  transform: scale(1.06);
+}
+
+.carouselOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(8, 11, 22, 0.76) 55%, rgba(8, 11, 22, 0.97) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 12px;
+  gap: 3px;
+}
+
+.carouselStars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 3px 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+  align-self: flex-start;
+  margin-bottom: 4px;
+}
+
+.carouselStarImg {
+  width: auto;
+  height: 14px;
+  object-fit: contain;
+}
+
+.carouselName {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+.carouselMeta {
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.carouselBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 5px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.carouselPrice {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.carouselLikes {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .chevronUp {
@@ -585,154 +711,23 @@
 
 .state {
   width: min(1200px, 100%);
-  margin: 18px auto 0;
-  padding: 0 16px;
-}
-
-.loadingShell {
-  min-height: 260px;
+  margin: 0 auto;
   display: flex;
-  align-items: center;
   justify-content: center;
+  padding: 64px 16px;
 }
 
-.loadingCard {
-  width: min(440px, 100%);
-  border: 1px solid #dbe4ef;
-  border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
-  padding: 24px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e8e8e8;
+  border-top-color: var(--color-red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-.loadingLogoWrap {
-  position: relative;
-  width: 96px;
-  height: 96px;
-  display: grid;
-  place-items: center;
-}
-
-.loadingRing {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  border: 2px solid rgba(226, 0, 26, 0.2);
-  border-top-color: #e2001a;
-  animation: loadingSpin 1.3s linear infinite;
-}
-
-.loadingLogo {
-  width: 76px;
-  height: 76px;
-  border-radius: 999px;
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 243, 245, 0.95) 46%,
-    rgba(255, 232, 236, 1) 100%
-  );
-  box-shadow:
-    inset 0 0 0 3px rgba(226, 0, 26, 0.08),
-    0 8px 18px rgba(226, 0, 26, 0.2);
-  display: grid;
-  place-items: center;
-  animation: logoPulse 1.6s ease-in-out infinite;
-}
-
-.loadingLogoInner {
-  width: 56px;
-  height: 56px;
-  border-radius: 999px;
-  background: #e2001a;
-  color: #ffffff;
-  font-size: 0.5rem;
-  font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: 0.08em;
-  text-align: center;
-  display: grid;
-  place-items: center;
-  padding: 8px;
-}
-
-.loadingTitle {
-  margin: 2px 0 0;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #0f172a;
-  text-align: center;
-}
-
-.loadingText {
-  margin: 0;
-  font-size: 0.86rem;
-  font-weight: 500;
-  color: #64748b;
-  text-align: center;
-}
-
-.loadingTrack {
-  width: 100%;
-  max-width: 280px;
-  height: 8px;
-  border-radius: 999px;
-  background: #e2e8f0;
-  overflow: hidden;
-}
-
-.loadingBar {
-  display: block;
-  height: 100%;
-  width: 40%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #e2001a, #ff4d65);
-  animation: loadingBarSlide 1.2s ease-in-out infinite;
-}
-
-@keyframes loadingSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes logoPulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.03);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes loadingBarSlide {
-  0% {
-    transform: translateX(-120%);
-  }
-  100% {
-    transform: translateX(320%);
-  }
-}
-
-@media (min-width: 768px) {
-  .loadingCard {
-    padding: 28px 24px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .loadingRing,
-  .loadingLogo,
-  .loadingBar {
-    animation: none;
-  }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .error,

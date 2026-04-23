@@ -1,15 +1,13 @@
 import { useMemo, useState } from "react";
 import {
-  ArrowUpRight,
   BedDouble,
   Bookmark,
-  Building2,
   Heart,
-  MapPin,
-  Tag,
+  RotateCw,
 } from "lucide-react";
 import type { Accommodation } from "../../types/accommodation.types";
 import styles from "./AccommodationCard.module.css";
+import accommodationMichelinStarIconUrl from "../../../img/accommodation-michelin-star-icon.svg";
 
 interface Props {
   accommodation: Accommodation;
@@ -19,6 +17,8 @@ interface Props {
   likes?: number;
   isSaved?: boolean;
   onSaveClick?: () => void;
+  compact?: boolean;
+  showLikeButton?: boolean;
 }
 
 function hashString(value: string): number {
@@ -89,9 +89,11 @@ export default function AccommodationCard({
   onViewDetails,
   isFavorited = false,
   onToggleFavorite,
-  likes = 0,
+  likes,
   isSaved = false,
   onSaveClick,
+  compact = false,
+  showLikeButton = true,
 }: Props) {
   const {
     id,
@@ -104,13 +106,22 @@ export default function AccommodationCard({
     stars,
     rating_stars,
     price_from,
+    description,
+    facilities,
   } = accommodation;
-  const coverImage = image_url || photo_url;
+  const rawCoverImage =
+    image_url
+    || photo_url
+    || (accommodation as Accommodation & { photo?: string; image?: string; imageUrl?: string }).photo
+    || (accommodation as Accommodation & { photo?: string; image?: string; imageUrl?: string }).image
+    || (accommodation as Accommodation & { photo?: string; image?: string; imageUrl?: string }).imageUrl;
+  const coverImage = rawCoverImage && rawCoverImage !== "N/A" ? rawCoverImage : undefined;
   const fallbackImage = useMemo(
     () => buildFallbackImage(name, city),
     [name, city],
   );
   const [forceFallback, setForceFallback] = useState(!coverImage);
+  const [flipped, setFlipped] = useState(false);
   const currentImage = !forceFallback && coverImage ? coverImage : fallbackImage;
   const starsValue = stars ?? rating_stars;
   const roundedStars =
@@ -118,92 +129,132 @@ export default function AccommodationCard({
       ? Math.min(5, Math.max(1, Math.round(starsValue)))
       : null;
 
-  return (
-    <article className={styles.card}>
-      <div className={styles.media}>
-        <img
-          className={styles.image}
-          src={currentImage}
-          alt={name}
-          loading="lazy"
-          onError={() => setForceFallback(true)}
-        />
-        <div className={styles.overlay} />
-        <p className={styles.category}>{category || "Hébergement"}</p>
-        {roundedStars && (
-          <p
-            className={styles.stars}
-            aria-label={`${roundedStars} étoile${roundedStars > 1 ? "s" : ""} Michelin`}
-          >
-            {Array.from({ length: roundedStars }).map((_, index) => (
-              <span key={`star-${id}-${index}`} className={styles.michelinStar}>
-                ✶
-              </span>
-            ))}
-          </p>
-        )}
-        <p className={styles.cityPill}>
-          <MapPin size={13} />
-          <span>{city}</span>
-        </p>
-      </div>
+  const facilityList = useMemo(
+    () =>
+      facilities
+        ? facilities
+            .split(",")
+            .map((f) => f.trim())
+            .filter(Boolean)
+            .slice(0, 4)
+        : [],
+    [facilities],
+  );
 
-      <div className={styles.body}>
-        <div className={styles.top}>
-          <span className={styles.iconWrap}>
-            <Building2 size={16} />
-          </span>
-          <h2 className={styles.name}>{name}</h2>
+  function handleFlip(e: React.MouseEvent) {
+    e.stopPropagation();
+    setFlipped(true);
+  }
+
+  function handleUnflip(e: React.MouseEvent) {
+    e.stopPropagation();
+    setFlipped(false);
+  }
+
+  return (
+    <div
+      className={`${styles.cardOuter} ${flipped ? styles.cardFlipped : ""} ${compact ? styles.compact : ""}`}
+      onClick={() => setFlipped(f => !f)}
+    >
+      <div className={styles.cardInner}>
+        {/* ── FRONT ── */}
+        <div className={styles.cardFront}>
+          <div
+            className={styles.photoArea}
+            style={{ backgroundImage: `url(${currentImage})` }}
+          >
+            <img
+              src={currentImage}
+              alt=""
+              className={styles.photoHidden}
+              onError={() => setForceFallback(true)}
+            />
+          </div>
+
+          <div className={styles.frontContent}>
+            {roundedStars && (
+              <div className={styles.frontStarsWrap}>
+                {Array.from({ length: roundedStars }, (_, i) => (
+                  <img
+                    key={i}
+                    src={accommodationMichelinStarIconUrl}
+                    alt="Étoile Michelin hébergement"
+                    className={styles.frontStarImg}
+                  />
+                ))}
+              </div>
+            )}
+            <h2 className={styles.name}>{name}</h2>
+            <p className={styles.infoRow}><span>{city}</span></p>
+            <p className={styles.cuisine}>{category || "Hébergement"}</p>
+            <button className={styles.moreBtn} onClick={(e) => { e.stopPropagation(); handleFlip(e); }}>
+              <RotateCw size={12} /><span>En savoir plus</span>
+            </button>
+            <div className={styles.frontBottom}>
+              <span className={styles.price}>{formatPrice(price_from)}</span>
+              {showLikeButton && onToggleFavorite && (
+                <button
+                  type="button"
+                  className={`${styles.likeBtn} ${isFavorited ? styles.likedActive : ""}`}
+                  onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+                  aria-label={isFavorited ? "Retirer des likes" : "Liker"}
+                >
+                  <Heart size={14} fill={isFavorited ? "currentColor" : "none"} />
+                  {likes !== undefined && <span>{likes}</span>}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
-        <p className={styles.info}>
-          <Tag size={14} />
-          <span>{address}</span>
-        </p>
+        {/* ── BACK ── */}
+        <div className={styles.cardBack}>
+          <div className={styles.backHeader}>
+            <h3 className={styles.backName}>{name}</h3>
+            <button className={styles.backFlipBtn} onClick={(e) => { e.stopPropagation(); handleUnflip(e); }} aria-label="Retourner">
+              <RotateCw size={14} />
+            </button>
+          </div>
 
-        <div className={styles.cardBottom}>
-          <p className={styles.price}>{formatPrice(price_from)}</p>
-          {onToggleFavorite && (
-            <div className={styles.quickActions}>
+          {address && (
+            <p className={styles.backAddress}>{address}</p>
+          )}
+
+          {description && (
+            <p className={styles.backDescription}>{description}</p>
+          )}
+
+          {facilityList.length > 0 && (
+            <ul className={styles.backFacilities}>
+              {facilityList.map((f) => (
+                <li key={f} className={styles.backFacilityItem}>{f}</li>
+              ))}
+            </ul>
+          )}
+
+          <div className={styles.backActions}>
+            <button
+              className={styles.backCta}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onViewDetails?.(String(id)); }}
+            >
+              <BedDouble size={14} />
+              <span>Voir l'établissement</span>
+            </button>
+            {onSaveClick && (
               <button
                 type="button"
-                className={`${styles.heartBtn} ${isFavorited ? styles.heartBtnActive : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleFavorite();
-                }}
-                aria-label={isFavorited ? "Retirer des likes" : "Liker"}
-              >
-                <Heart size={14} fill={isFavorited ? "currentColor" : "none"} />
-                <span>{likes}</span>
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.saveBtn} ${isSaved ? styles.saveBtnActive : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSaveClick?.();
-                }}
+                className={`${styles.backSaveBtn} ${isSaved ? styles.backSaveBtnActive : ""}`}
+                onClick={(e) => { e.stopPropagation(); onSaveClick(); }}
                 aria-label={isSaved ? "Déjà enregistré" : "Enregistrer"}
                 title={isSaved ? "Déjà enregistré" : "Enregistrer"}
               >
                 <Bookmark size={14} fill={isSaved ? "currentColor" : "none"} />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-
-        <button
-          className={styles.cta}
-          type="button"
-          onClick={() => onViewDetails?.(String(id))}
-        >
-          <BedDouble size={15} />
-          <span>Voir l'établissement</span>
-          <ArrowUpRight size={15} />
-        </button>
       </div>
-    </article>
+    </div>
   );
 }

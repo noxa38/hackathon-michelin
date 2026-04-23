@@ -8,17 +8,20 @@ import RestaurantCard from '../components/features/RestaurantCard'
 import SaveToListModal from '../components/features/SaveToListModal'
 import type { Restaurant } from '../types/restaurant.types'
 import styles from './RestaurantsPage.module.css'
+import restaurantMichelinStarIconUrl from '../../img/restaurant-michelin-star-icon.png'
+import michelinBigGourmandIconUrl from '../../img/michelin-big-gourmand-icon.png'
+import michelinGreenStarIconUrl from '../../img/michelin-green-star-icon.png'
 
 const RESTAURANTS_LIKED_LIST_NAME = 'Restaurants likés'
 
 type DistinctionKey = '3' | '2' | '1' | 'bib' | 'green'
 
 const DISTINCTION_OPTIONS: { value: DistinctionKey; label: string; img?: string; stars?: number }[] = [
-  { value: '3',    label: '3 Étoiles',    img: '/etoile-michelin.png', stars: 3 },
-  { value: '2',    label: '2 Étoiles',    img: '/etoile-michelin.png', stars: 2 },
-  { value: '1',    label: '1 Étoile',     img: '/etoile-michelin.png', stars: 1 },
-  { value: 'bib',  label: 'Bib Gourmand', img: '/Michelin_Big_gourmand.png' },
-  { value: 'green',label: 'Étoile Verte', img: '/MICHELINGreenStar_green.png' },
+  { value: '3',    label: '3 Étoiles',    img: restaurantMichelinStarIconUrl, stars: 3 },
+  { value: '2',    label: '2 Étoiles',    img: restaurantMichelinStarIconUrl, stars: 2 },
+  { value: '1',    label: '1 Étoile',     img: restaurantMichelinStarIconUrl, stars: 1 },
+  { value: 'bib',  label: 'Bib Gourmand', img: michelinBigGourmandIconUrl },
+  { value: 'green',label: 'Étoile Verte', img: michelinGreenStarIconUrl },
 ]
 
 const PRICE_OPTIONS = [
@@ -456,7 +459,7 @@ export default function RestaurantsPage() {
                     <div className={styles.carouselOverlay}>
                       <div className={styles.carouselStars}>
                         {Array.from({ length: restaurant.stars }, (_, i) => (
-                          <img key={i} src="/etoile-michelin.png" alt="" className={styles.carouselStarImg} />
+                          <img key={i} src={restaurantMichelinStarIconUrl} alt="" className={styles.carouselStarImg} />
                         ))}
                       </div>
                       <p className={styles.carouselName}>{restaurant.name}</p>

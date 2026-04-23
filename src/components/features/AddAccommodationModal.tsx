@@ -1,9 +1,19 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import AccommodationSearch from './AccommodationSearch'
-import { addAccommodationFavorite, getUserAccommodationFavoriteIds } from '../../services/accommodationFavorite.service'
+import { addAccommodationToList, findOrCreateList, getListAccommodations, getLists } from '../../services/list.service'
 import type { Accommodation } from '../../types/accommodation.types'
 import styles from './AddAccommodationModal.module.css'
+import accommodationMichelinStarIconUrl from '../../../img/accommodation-michelin-star-icon.svg'
+
+const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likées'
+
+function normalizeAccommodationId(value: string | number): number {
+  const rawValue = String(value)
+  const unprefixed = rawValue.includes('-') ? rawValue.split('-').pop() || rawValue : rawValue
+  const parsed = Number(unprefixed)
+  return Number.isFinite(parsed) ? parsed : 0
+}
 
 interface AddAccommodationModalProps {
   isOpen: boolean
@@ -23,16 +33,27 @@ export default function AddAccommodationModal({
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [favoriteIds, setFavoriteIds] = useState<number[]>([])
+  const starsValue = selectedAccommodation?.stars ?? selectedAccommodation?.rating_stars
+  const roundedStars = starsValue && Number.isFinite(starsValue)
+    ? Math.min(5, Math.max(1, Math.round(starsValue)))
+    : 0
 
   // Load user's favorite accommodation IDs on modal open
   useEffect(() => {
     if (isOpen && token) {
       const loadFavoriteIds = async () => {
         try {
-          const ids = await getUserAccommodationFavoriteIds(token)
-          setFavoriteIds(ids)
+          const lists = await getLists(token)
+          const likedList = lists.find((list) => list.name === ACCOMMODATIONS_LIKED_LIST_NAME)
+          if (!likedList) {
+            setFavoriteIds([])
+            return
+          }
+          const items = await getListAccommodations(token, likedList.id)
+          setFavoriteIds(items.map((item) => normalizeAccommodationId(item.id)))
         } catch (err) {
           console.error('Error loading favorite IDs:', err)
+          setFavoriteIds([])
         }
       }
       loadFavoriteIds()
@@ -45,9 +66,12 @@ export default function AddAccommodationModal({
     try {
       setIsLoading(true)
       setErrorMessage(null)
-      await addAccommodationFavorite(token, Number(selectedAccommodation.id))
+      const likedList = await findOrCreateList(token, ACCOMMODATIONS_LIKED_LIST_NAME)
+      const accommodationId = normalizeAccommodationId(selectedAccommodation.id)
+      const source = selectedAccommodation.source === 'accommodations' ? 'accommodations' : 'hotels'
+      await addAccommodationToList(token, likedList.id, accommodationId, source)
       setSuccessMessage(`${selectedAccommodation.name} ajouté aux favoris!`)
-      setFavoriteIds([...favoriteIds, Number(selectedAccommodation.id)])
+      setFavoriteIds([...favoriteIds, accommodationId])
       setTimeout(() => {
         setSelectedAccommodation(null)
         setSuccessMessage(null)
@@ -61,7 +85,9 @@ export default function AddAccommodationModal({
     }
   }
 
-  const isAlreadyFavorited = selectedAccommodation ? favoriteIds.includes(Number(selectedAccommodation.id)) : false
+  const isAlreadyFavorited = selectedAccommodation
+    ? favoriteIds.includes(normalizeAccommodationId(selectedAccommodation.id))
+    : false
 
   if (!isOpen) return null
 
@@ -97,6 +123,18 @@ export default function AddAccommodationModal({
             </p>
             {selectedAccommodation.category && (
               <p className={styles.accommodationCategory}>{selectedAccommodation.category}</p>
+            )}
+            {roundedStars > 0 && (
+              <div className={styles.starsRow}>
+                {Array.from({ length: roundedStars }, (_, i) => (
+                  <img
+                    key={`selected-accommodation-star-${i}`}
+                    src={accommodationMichelinStarIconUrl}
+                    alt="Étoile Michelin"
+                    className={styles.starImg}
+                  />
+                ))}
+              </div>
             )}
           </div>
         )}

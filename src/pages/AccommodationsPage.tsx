@@ -22,6 +22,110 @@ import {
   Tags,
   X,
 } from "lucide-react";
+
+const TOP_LIKED_ACCOMMODATIONS = [
+  {
+    id: 1,
+    name: "Le Grand Siècle",
+    city: "Paris",
+    category: "Palace",
+    stars: 5,
+    likes: 1342,
+    price: "Dès 980 € / nuit",
+    photo: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&h=900&fit=crop",
+  },
+  {
+    id: 2,
+    name: "Villa Rocabella",
+    city: "Nice",
+    category: "Boutique Hôtel",
+    stars: 5,
+    likes: 1104,
+    price: "Dès 620 € / nuit",
+    photo: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&h=900&fit=crop",
+  },
+  {
+    id: 3,
+    name: "Chalet des Cimes",
+    city: "Megève",
+    category: "Chalet de luxe",
+    stars: 5,
+    likes: 987,
+    price: "Dès 740 € / nuit",
+    photo: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&h=900&fit=crop",
+  },
+  {
+    id: 4,
+    name: "Domaine des Landes",
+    city: "Bordeaux",
+    category: "Château",
+    stars: 4,
+    likes: 892,
+    price: "Dès 450 € / nuit",
+    photo: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1200&h=900&fit=crop",
+  },
+  {
+    id: 5,
+    name: "L'Oiseau Blanc",
+    city: "Lyon",
+    category: "Hôtel de caractère",
+    stars: 4,
+    likes: 834,
+    price: "Dès 390 € / nuit",
+    photo: "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=1200&h=900&fit=crop",
+  },
+  {
+    id: 6,
+    name: "Résidence Côté Mer",
+    city: "Biarritz",
+    category: "Boutique Hôtel",
+    stars: 4,
+    likes: 768,
+    price: "Dès 310 € / nuit",
+    photo: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&h=900&fit=crop",
+  },
+  {
+    id: 7,
+    name: "Mas Provençal",
+    city: "Aix-en-Provence",
+    category: "Maison d'hôtes",
+    stars: 4,
+    likes: 712,
+    price: "Dès 280 € / nuit",
+    photo: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200&h=900&fit=crop",
+  },
+  {
+    id: 8,
+    name: "Le Manoir Breton",
+    city: "Quimper",
+    category: "Manoir",
+    stars: 4,
+    likes: 681,
+    price: "Dès 260 € / nuit",
+    photo: "https://images.unsplash.com/photo-1578645510447-e20b4311e3ce?w=1200&h=900&fit=crop",
+  },
+  {
+    id: 9,
+    name: "Suite Altitude",
+    city: "Annecy",
+    category: "Resort",
+    stars: 5,
+    likes: 655,
+    price: "Dès 820 € / nuit",
+    photo: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1200&h=900&fit=crop",
+  },
+  {
+    id: 10,
+    name: "Palais des Sables",
+    city: "Marseille",
+    category: "Palace",
+    stars: 5,
+    likes: 629,
+    price: "Dès 1100 € / nuit",
+    photo: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&h=900&fit=crop",
+  },
+];
+
 import {
   fetchAccommodationById,
   fetchAccommodations,
@@ -38,6 +142,7 @@ import type { Accommodation } from "../types/accommodation.types";
 import AccommodationCard from "../components/features/AccommodationCard";
 import SaveToListModal from "../components/features/SaveToListModal";
 import styles from "./AccommodationsPage.module.css";
+import accommodationMichelinStarIconUrl from '../../img/accommodation-michelin-star-icon.svg';
 
 const ACCOMMODATIONS_LIKED_LIST_NAME = "Hébergements likées";
 
@@ -77,15 +182,6 @@ export default function AccommodationsPage() {
     notes: "",
   };
   const navigate = useNavigate();
-  const heroFallbackPhotos = useMemo(
-    () => [
-      "https://picsum.photos/seed/michelin-hotel-1/1200/900",
-      "https://picsum.photos/seed/michelin-hotel-2/1200/900",
-      "https://picsum.photos/seed/michelin-hotel-3/1200/900",
-      "https://picsum.photos/seed/michelin-hotel-4/1200/900",
-    ],
-    [],
-  );
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -320,15 +416,6 @@ export default function AccommodationsPage() {
     return Array.from({ length: end - start + 1 }, (_, index) => start + index);
   }, [safeCurrentPage, totalPages]);
 
-  const heroPhotos = useMemo(() => {
-    const photos = accommodations
-      .map((a) => a.image_url || a.photo_url)
-      .filter((value): value is string => Boolean(value))
-      .filter((value, index, arr) => arr.indexOf(value) === index)
-      .slice(0, 4);
-    return photos.length >= 4 ? photos : heroFallbackPhotos;
-  }, [accommodations, heroFallbackPhotos]);
-
   useEffect(() => {
     setCurrentPage(1);
   }, [query, cityFilters, categoryFilters, sourceFilters, minRating]);
@@ -509,7 +596,6 @@ export default function AccommodationsPage() {
       <section className={styles.header}>
         <div className={styles.headerShell}>
           <div className={styles.headerContent}>
-            <span className={styles.kicker}>Selection prestige</span>
             <h1 className={styles.title}>Hébergements</h1>
             <p className={styles.lead}>
               Des adresses élégantes sélectionnées pour prolonger l'expérience
@@ -520,7 +606,7 @@ export default function AccommodationsPage() {
                 <span className={styles.subtitleValue}>
                   {accommodations.length}
                 </span>{" "}
-                adresses disponibles
+                hébergements
               </p>
             )}
             {!loading && !error && (
@@ -540,17 +626,48 @@ export default function AccommodationsPage() {
               </div>
             )}
           </div>
+        </div>
 
+        <div className={styles.headerCarouselWrap}>
           <div className={styles.headerGallery} aria-hidden="true">
-            <div className={styles.headerPhotoCard}>
-              <img
-                className={styles.headerPhoto}
-                src={heroPhotos[0]}
-                alt=""
-                loading="lazy"
-              />
-              <span className={styles.galleryBadge}>Escapade d'exception</span>
+          <div className={styles.headerCarousel}>
+            <span className={styles.galleryBadge}>Sélection des hébergements les plus likés</span>
+            <div className={styles.carouselTrack}>
+              {TOP_LIKED_ACCOMMODATIONS.map((item) => (
+                <article key={item.id} className={styles.carouselCard}>
+                  <img
+                    className={styles.carouselPhoto}
+                    src={item.photo}
+                    alt=""
+                    loading="lazy"
+                  />
+                  <div className={styles.carouselOverlay}>
+                    <div className={styles.carouselStars}>
+                      {Array.from({ length: item.stars }, (_, index) => (
+                        <img
+                          key={`${item.id}-star-${index}`}
+                          src={accommodationMichelinStarIconUrl}
+                          alt=""
+                          className={styles.carouselStarImg}
+                        />
+                      ))}
+                    </div>
+                    <p className={styles.carouselName}>{item.name}</p>
+                    <p className={styles.carouselMeta}>
+                      {item.city} · {item.category}
+                    </p>
+                    <div className={styles.carouselBottom}>
+                      <span className={styles.carouselPrice}>{item.price}</span>
+                      <span className={styles.carouselLikes}>
+                        <Heart size={12} />
+                        <span>{item.likes}</span>
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
+          </div>
           </div>
         </div>
       </section>
@@ -715,27 +832,7 @@ export default function AccommodationsPage() {
 
       {loading && (
         <div className={styles.state}>
-          <div className={styles.loadingShell} role="status" aria-live="polite">
-            <div className={styles.loadingCard}>
-              <div className={styles.loadingLogoWrap} aria-hidden="true">
-                <div className={styles.loadingRing} />
-                <div className={styles.loadingLogo}>
-                  <span className={styles.loadingLogoInner}>
-                    MICHELIN GUIDE
-                  </span>
-                </div>
-              </div>
-              <p className={styles.loadingTitle}>
-                Recherche des meilleures adresses...
-              </p>
-              <p className={styles.loadingText}>
-                Preparation de votre selection d'hebergements.
-              </p>
-              <div className={styles.loadingTrack} aria-hidden="true">
-                <span className={styles.loadingBar} />
-              </div>
-            </div>
-          </div>
+          <div className={styles.spinner} aria-label="Chargement" />
         </div>
       )}
 

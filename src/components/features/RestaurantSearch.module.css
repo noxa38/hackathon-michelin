@@ -1,7 +1,7 @@
 .searchContainer {
   position: relative;
   width: 100%;
-  max-width: 500px;
+  max-width: 100%;
 }
 
 .searchBox {
@@ -11,12 +11,15 @@
   border-radius: 8px;
   padding: 10px 12px;
   background-color: white;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   transition: all 0.3s ease;
 }
 
 .searchBox:focus-within {
-  border-color: #d4a574;
-  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 3px rgba(228, 0, 43, 0.14);
 }
 
 .searchIcon {
@@ -61,15 +64,19 @@
 }
 
 .resultsDropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
   background: white;
-  border: 1px solid #e0e0e0;
-  border-top: none;
-  border-radius: 0 0 8px 8px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
   max-height: 400px;
+  overflow-x: hidden;
   overflow-y: auto;
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -79,6 +86,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-width: 0;
   padding: 12px 12px;
   border-bottom: 1px solid #f0f0f0;
   transition: background-color 0.2s;
@@ -89,11 +97,11 @@
 }
 
 .resultItem:hover {
-  background-color: #fafafa;
+  background-color: rgba(228, 0, 43, 0.06);
 }
 
 .resultItem.favorited {
-  background-color: #f5f1eb;
+  background-color: rgba(228, 0, 43, 0.09);
 }
 
 .resultInfo {
@@ -121,7 +129,7 @@
 
 .addButton {
   background: none;
-  border: 2px solid #d4a574;
+  border: 2px solid var(--color-red);
   border-radius: 6px;
   width: 32px;
   height: 32px;
@@ -129,21 +137,21 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #d4a574;
+  color: var(--color-red);
   margin-left: 8px;
   flex-shrink: 0;
   transition: all 0.2s;
 }
 
 .addButton:hover {
-  background-color: #d4a574;
+  background-color: var(--color-red);
   color: white;
 }
 
 .addButton.added {
-  background-color: #d4a574;
+  background-color: var(--color-red);
   color: white;
-  border-color: #d4a574;
+  border-color: var(--color-red);
 }
 
 .addButton.added:hover {

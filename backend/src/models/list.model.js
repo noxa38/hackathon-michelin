@@ -164,7 +164,23 @@ class List {
          ORDER BY lr.added_at DESC`,
         [listId, userId]
       );
-      return rows || [];
+      if (!rows || rows.length === 0) return [];
+      // Attach photos from restaurant_photos table
+      const ids = rows.map((r) => r.id);
+      const placeholders = ids.map(() => '?').join(',');
+      const [photos] = await db.execute(
+        `SELECT restaurant_id, url, caption, position
+         FROM restaurant_photos
+         WHERE restaurant_id IN (${placeholders})
+         ORDER BY restaurant_id, position ASC`,
+        ids
+      );
+      const photoMap = {};
+      for (const p of photos) {
+        if (!photoMap[p.restaurant_id]) photoMap[p.restaurant_id] = [];
+        photoMap[p.restaurant_id].push({ url: p.url, caption: p.caption, position: p.position });
+      }
+      return rows.map((r) => ({ ...r, photos: photoMap[r.id] ?? [] }));
     } catch (err) {
       throw err;
     }

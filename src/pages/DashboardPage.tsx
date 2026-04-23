@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Plus, Edit2, Trash2, X, User, Mail, Calendar, AlertCircle, Bookmark, ChevronRight, Home, Heart, UtensilsCrossed, Building2 } from 'lucide-react'
+import { LogOut, Plus, Edit2, Trash2, User, Mail, Calendar, AlertCircle, Bookmark, Home, Heart, UtensilsCrossed, Building2 } from 'lucide-react'
 import * as authService from '../services/auth.service'
 import * as listService from '../services/list.service'
 import * as accommodationService from '../services/accommodation.service'
 import * as favoriteService from '../services/favorite.service'
 import * as professionalService from '../services/professional.service'
-import { removeAccommodationFavorite, getUserAccommodationFavorites } from '../services/accommodationFavorite.service'
+import { fetchAllRestaurants } from '../services/restaurant.service'
 import { useAuth } from '../contexts/AuthContext'
 import ProfessionalRequestForm from '../components/features/ProfessionalRequestForm'
+import RestaurantCard from '../components/features/RestaurantCard'
+import AccommodationCard from '../components/features/AccommodationCard'
 import AddFavoriteModal from '../components/features/AddFavoriteModal'
 import AddAccommodationModal from '../components/features/AddAccommodationModal'
 import RestaurantDetailModal from '../components/features/RestaurantDetailModal'
@@ -21,6 +23,24 @@ import styles from './DashboardPage.module.css'
 
 const RESTAURANTS_LIKED_LIST_NAME = 'Restaurants likés'
 const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likées'
+
+function getInitialDashboardRestaurantLikeCount(restaurant: Restaurant): number {
+  const starsBonus = restaurant.stars * 70
+  const greenStarBonus = restaurant.green_star === 1 ? 25 : 0
+  const bibBonus = restaurant.award.toLowerCase().includes('bib') || restaurant.award.toLowerCase().includes('gourmand') ? 20 : 0
+  const popularitySeed = (restaurant.id * 37) % 120
+  return 20 + starsBonus + greenStarBonus + bibBonus + popularitySeed
+}
+
+function getInitialDashboardAccommodationLikeCount(accommodation: Accommodation): number {
+  const stars = accommodation.stars ?? accommodation.rating_stars ?? 0
+  const premiumBonus = accommodation.category?.toLowerCase().includes('palace') ? 30 : 0
+  const rawId = String(accommodation.id)
+  const normalizedId = rawId.includes('-') ? rawId.split('-').pop() ?? rawId : rawId
+  const numericId = Number(normalizedId)
+  const popularitySeed = Number.isFinite(numericId) ? (numericId * 19) % 90 : 0
+  return 12 + Math.floor(stars * 20) + premiumBonus + popularitySeed
+}
 
 type DashboardTab = 'home' | 'lists' | 'profile' | 'pro-request' | 'pro-management'
 
@@ -76,8 +96,17 @@ export default function DashboardPage() {
   })
 
   const token = authService.getToken()
-  const isAutoLikedList = (listName: string) =>
-    listName === RESTAURANTS_LIKED_LIST_NAME || listName === ACCOMMODATIONS_LIKED_LIST_NAME
+
+  async function loadAccommodationFavoritesFromLikedList(currentToken: string, currentLists?: List[]) {
+    const listsData = currentLists || await listService.getLists(currentToken)
+    const likedList = listsData.find((list) => list.name === ACCOMMODATIONS_LIKED_LIST_NAME)
+    if (!likedList) {
+      setAccommodationFavorites([])
+      return
+    }
+    const items = await listService.getListAccommodations(currentToken, likedList.id)
+    setAccommodationFavorites(items as Accommodation[])
+  }
 
   async function loadLikedStats(currentToken: string, currentLists?: List[]) {
     const listsData = currentLists || await listService.getLists(currentToken)
@@ -139,18 +168,22 @@ export default function DashboardPage() {
 
         const restaurantsData = await accommodationService.fetchAccommodations()
         setRestaurants(restaurantsData)
+        const allRestaurants = await fetchAllRestaurants().catch(() => [])
         
         try {
           const favoritesData = await favoriteService.getUserFavorites(token!)
-          setFavorites(favoritesData)
+          const favoritesWithPhotos = favoritesData.map((favorite) => {
+            const enriched = allRestaurants.find((restaurant) => restaurant.id === favorite.id)
+            return enriched ? { ...favorite, photos: enriched.photos } : favorite
+          })
+          setFavorites(favoritesWithPhotos)
         } catch (err) {
           console.error('Failed to load favorites:', err)
           setFavorites([])
         }
 
         try {
-          const accommodationFavoritesData = await getUserAccommodationFavorites(token!)
-          setAccommodationFavorites(accommodationFavoritesData)
+          await loadAccommodationFavoritesFromLikedList(token!, listsData)
         } catch (err) {
           console.error('Failed to load accommodation favorites:', err)
           setAccommodationFavorites([])
@@ -294,13 +327,21 @@ export default function DashboardPage() {
     }
   }
 
+  function handleAddFavoriteClick() {
+    if (favorites.length >= 4) return
+    setIsAddFavoriteModalOpen(true)
+  }
+
+  function handleAddAccommodationClick() {
+    if (accommodationFavorites.length >= 4) return
+    setIsAddAccommodationModalOpen(true)
+  }
+
   async function handleRemoveFavorite(restaurantId: number) {
     if (!token) return
-
     try {
       await favoriteService.removeFavorite(token, restaurantId)
-      const updatedFavorites = favorites.filter(fav => fav.id !== restaurantId)
-      setFavorites(updatedFavorites)
+      setFavorites(prev => prev.filter(fav => fav.id !== restaurantId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la suppression')
     }
@@ -308,29 +349,39 @@ export default function DashboardPage() {
 
   async function handleRemoveAccommodationFavorite(accommodationId: number | string) {
     if (!token) return
+    const likedList = lists.find((list) => list.name === ACCOMMODATIONS_LIKED_LIST_NAME)
+    if (!likedList) return
+
+    const numericId = Number(String(accommodationId).replace(/^[ha]-/, ''))
+    if (!Number.isFinite(numericId)) return
 
     try {
-      await removeAccommodationFavorite(token, Number(accommodationId))
-      const updatedFavorites = accommodationFavorites.filter(fav => fav.id !== accommodationId)
-      setAccommodationFavorites(updatedFavorites)
+      await listService.removeAccommodationFromList(token, likedList.id, numericId)
+      setAccommodationFavorites(prev => prev.filter(fav => String(fav.id) !== String(accommodationId)))
+      const updatedLists = lists.map((list) => list.id === likedList.id
+        ? {
+            ...list,
+            itemCount: Math.max(0, (list.itemCount ?? 0) - 1),
+            accommodationCount: Math.max(0, (list.accommodationCount ?? 0) - 1),
+          }
+        : list)
+      setLists(updatedLists)
+      await loadLikedStats(token, updatedLists)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la suppression')
     }
-  }
-
-  function handleAddFavoriteClick() {
-    setIsAddFavoriteModalOpen(true)
-  }
-
-  function handleAddAccommodationClick() {
-    setIsAddAccommodationModalOpen(true)
   }
 
   async function handleFavoriteAdded() {
     if (!token) return
     try {
       const favoritesData = await favoriteService.getUserFavorites(token!)
-      setFavorites(favoritesData)
+      const allRestaurants = await fetchAllRestaurants().catch(() => [])
+      const favoritesWithPhotos = favoritesData.map((favorite) => {
+        const enriched = allRestaurants.find((restaurant) => restaurant.id === favorite.id)
+        return enriched ? { ...favorite, photos: enriched.photos } : favorite
+      })
+      setFavorites(favoritesWithPhotos)
     } catch (err) {
       console.error('Failed to reload favorites:', err)
     }
@@ -339,8 +390,7 @@ export default function DashboardPage() {
   async function handleAccommodationFavoriteAdded() {
     if (!token) return
     try {
-      const accommodationFavoritesData = await getUserAccommodationFavorites(token!)
-      setAccommodationFavorites(accommodationFavoritesData)
+      await loadAccommodationFavoritesFromLikedList(token!)
     } catch (err) {
       console.error('Failed to reload accommodation favorites:', err)
     }
@@ -575,10 +625,15 @@ export default function DashboardPage() {
 
                 <div className={styles.favoritesSection}>
                   <div className={styles.favoritesHeader}>
-                    <h3 className={styles.sectionSubtitle}>Mes restaurants préférés</h3>
+                    <div>
+                      <h3 className={styles.sectionSubtitle}>Mes restaurants préférés</h3>
+                      <p className={styles.favoritesLimitNote}>4 items maximum</p>
+                    </div>
                     <button
                       className={styles.addButton}
                       onClick={handleAddFavoriteClick}
+                      disabled={favorites.length >= 4}
+                      title={favorites.length >= 4 ? 'Limite atteinte (4 max)' : 'Ajouter'}
                     >
                       <Plus size={18} />
                       Ajouter
@@ -592,34 +647,25 @@ export default function DashboardPage() {
                       <p className={styles.emptySubtext}>Ajoutez vos restaurants préférés</p>
                     </div>
                   ) : (
-                    <div className={styles.favoritesGrid}>
-                      {favorites.slice(0, 8).map(fav => (
-                        <div
-                          key={fav.id}
-                          className={styles.favoriteCard}
-                          onClick={() => {
-                            setSelectedRestaurantDetail(fav)
-                            setIsRestaurantDetailOpen(true)
-                          }}
-                        >
-                          <div className={styles.favoriteHeader}>
-                            <div className={styles.favoriteName}>{fav.name}</div>
-                            <button
-                              className={styles.removeFavoriteButton}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleRemoveFavorite(fav.id)
-                              }}
-                              title="Supprimer"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                          <p className={styles.favoriteCuisine}>{fav.cuisine}</p>
-                          <div className={styles.favoriteStats}>
-                            <span>{fav.city}</span>
-                            {fav.stars > 0 && <span>{'⭐'.repeat(Math.floor(fav.stars))}</span>}
-                          </div>
+                    <div className={`${styles.favoritesGrid} ${styles.listCardsGrid}`}>
+                      {favorites.slice(0, 4).map(fav => (
+                        <div key={fav.id} className={styles.listCardWrapper}>
+                          <button
+                            type="button"
+                            className={styles.favoriteCardRemove}
+                            title="Retirer des favoris"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRemoveFavorite(fav.id)
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <RestaurantCard
+                            restaurant={fav}
+                            compact={true}
+                            showLikeButton={false}
+                          />
                         </div>
                       ))}
                     </div>
@@ -628,10 +674,15 @@ export default function DashboardPage() {
 
                 <div className={styles.favoritesSection}>
                   <div className={styles.favoritesHeader}>
-                    <h3 className={styles.sectionSubtitle}>Mes hébergements préférés</h3>
+                    <div>
+                      <h3 className={styles.sectionSubtitle}>Mes hébergements préférés</h3>
+                      <p className={styles.favoritesLimitNote}>4 items maximum</p>
+                    </div>
                     <button
                       className={styles.addButton}
                       onClick={handleAddAccommodationClick}
+                      disabled={accommodationFavorites.length >= 4}
+                      title={accommodationFavorites.length >= 4 ? 'Limite atteinte (4 max)' : 'Ajouter'}
                     >
                       <Plus size={18} />
                       Ajouter
@@ -645,34 +696,25 @@ export default function DashboardPage() {
                       <p className={styles.emptySubtext}>Ajoutez vos hébergements préférés</p>
                     </div>
                   ) : (
-                    <div className={styles.favoritesGrid}>
-                      {accommodationFavorites.slice(0, 8).map(fav => (
-                        <div
-                          key={fav.id}
-                          className={styles.favoriteCard}
-                          onClick={() => {
-                            setSelectedAccommodationDetail(fav)
-                            setIsAccommodationDetailOpen(true)
-                          }}
-                        >
-                          <div className={styles.favoriteHeader}>
-                            <div className={styles.favoriteName}>{fav.name}</div>
-                            <button
-                              className={styles.removeFavoriteButton}
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleRemoveAccommodationFavorite(fav.id)
-                              }}
-                              title="Supprimer"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                          <p className={styles.favoriteCuisine}>{fav.category}</p>
-                          <div className={styles.favoriteStats}>
-                            <span>{fav.city}</span>
-                            {fav.stars && fav.stars > 0 && <span>{'⭐'.repeat(Math.floor(fav.stars))}</span>}
-                          </div>
+                    <div className={`${styles.favoritesGrid} ${styles.listCardsGrid}`}>
+                      {accommodationFavorites.slice(0, 4).map(fav => (
+                        <div key={fav.id} className={styles.listCardWrapper}>
+                          <button
+                            type="button"
+                            className={styles.favoriteCardRemove}
+                            title="Retirer des favoris"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleRemoveAccommodationFavorite(fav.id)
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <AccommodationCard
+                            accommodation={fav}
+                            compact={true}
+                            showLikeButton={false}
+                          />
                         </div>
                       ))}
                     </div>
@@ -786,83 +828,59 @@ export default function DashboardPage() {
                             <p className={styles.detailsDate}>
                               Créée le {new Date(selectedList.createdAt).toLocaleDateString('fr-FR')}
                             </p>
-
-                            {selectedListLoading ? (
-                              <p className={styles.detailsDate}>Chargement du contenu...</p>
-                            ) : (
-                              <div className={styles.selectedListGroups}>
-                                {selectedList.name !== ACCOMMODATIONS_LIKED_LIST_NAME && (
-                                  <div className={styles.selectedListGroup}>
-                                    <h4 className={styles.selectedListGroupTitle}>Restaurants</h4>
-                                    {selectedListRestaurants.length === 0 ? (
-                                      <p className={styles.selectedListEmpty}>Aucun restaurant dans cette liste.</p>
-                                    ) : (
-                                      <div className={styles.selectedListItems}>
-                                        {selectedListRestaurants.map((restaurant) => (
-                                          <div key={`dashboard-list-restaurant-${restaurant.id}`} className={styles.selectedListItemRow}>
-                                            <button
-                                              type="button"
-                                              className={styles.selectedListItem}
-                                              onClick={() => {
-                                                setSelectedRestaurantDetail(restaurant)
-                                                setIsRestaurantDetailOpen(true)
-                                              }}
-                                            >
-                                              <span className={styles.selectedListItemTitle}>{restaurant.name}</span>
-                                              <span className={styles.selectedListItemMeta}>{restaurant.city}</span>
-                                            </button>
-                                            <button
-                                              type="button"
-                                              className={styles.selectedListItemRemove}
-                                              title="Retirer de la liste"
-                                              onClick={() => handleRemoveRestaurantFromList(selectedList!.id, restaurant.id)}
-                                            >
-                                              <X size={14} />
-                                            </button>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-
-                                {selectedList.name !== RESTAURANTS_LIKED_LIST_NAME && (
-                                  <div className={styles.selectedListGroup}>
-                                    <h4 className={styles.selectedListGroupTitle}>Hébergements</h4>
-                                    {selectedListAccommodations.length === 0 ? (
-                                      <p className={styles.selectedListEmpty}>Aucun hébergement dans cette liste.</p>
-                                    ) : (
-                                      <div className={styles.selectedListItems}>
-                                        {selectedListAccommodations.map((accommodation) => (
-                                          <div key={`dashboard-list-accommodation-${accommodation.id}`} className={styles.selectedListItemRow}>
-                                            <button
-                                              type="button"
-                                              className={styles.selectedListItem}
-                                              onClick={() => {
-                                                setSelectedAccommodationDetail(accommodation)
-                                                setIsAccommodationDetailOpen(true)
-                                              }}
-                                            >
-                                              <span className={styles.selectedListItemTitle}>{accommodation.name}</span>
-                                              <span className={styles.selectedListItemMeta}>{accommodation.city}</span>
-                                            </button>
-                                            <button
-                                              type="button"
-                                              className={styles.selectedListItemRemove}
-                                              title="Retirer de la liste"
-                                              onClick={() => handleRemoveAccommodationFromList(selectedList!.id, accommodation.id)}
-                                            >
-                                              <X size={14} />
-                                            </button>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            )}
                           </div>
+
+                          {selectedListLoading ? (
+                            <p className={styles.detailsDate}>Chargement du contenu...</p>
+                          ) : (
+                            <div className={styles.selectedListGroups}>
+                              {selectedList.name !== ACCOMMODATIONS_LIKED_LIST_NAME && (
+                                <div className={styles.selectedListGroup}>
+                                  <h4 className={styles.selectedListGroupTitle}>Restaurants</h4>
+                                  {selectedListRestaurants.length === 0 ? (
+                                    <p className={styles.selectedListEmpty}>Aucun restaurant dans cette liste.</p>
+                                  ) : (
+                                    <div className={styles.listCardsGrid}>
+                                      {selectedListRestaurants.map((restaurant) => (
+                                        <div key={`dashboard-list-restaurant-${restaurant.id}`} className={styles.listCardWrapper}>
+                                          <RestaurantCard
+                                            restaurant={restaurant}
+                                            compact={true}
+                                            likes={getInitialDashboardRestaurantLikeCount(restaurant)}
+                                            isLiked={true}
+                                            onLikeChange={() => handleRemoveRestaurantFromList(selectedList!.id, restaurant.id)}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {selectedList.name !== RESTAURANTS_LIKED_LIST_NAME && (
+                                <div className={styles.selectedListGroup}>
+                                  <h4 className={styles.selectedListGroupTitle}>Hébergements</h4>
+                                  {selectedListAccommodations.length === 0 ? (
+                                    <p className={styles.selectedListEmpty}>Aucun hébergement dans cette liste.</p>
+                                  ) : (
+                                    <div className={styles.listCardsGrid}>
+                                      {selectedListAccommodations.map((accommodation) => (
+                                        <div key={`dashboard-list-accommodation-${accommodation.id}`} className={styles.listCardWrapper}>
+                                          <AccommodationCard
+                                            accommodation={accommodation}
+                                            compact={true}
+                                            likes={getInitialDashboardAccommodationLikeCount(accommodation)}
+                                            isFavorited={true}
+                                            onToggleFavorite={() => handleRemoveAccommodationFromList(selectedList!.id, accommodation.id)}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className={styles.listsDetailEmpty}>

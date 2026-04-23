@@ -25,7 +25,7 @@ import { fetchAllRestaurants } from "../services/restaurant.service";
 import type { Accommodation, HotelRoomDetail } from "../types/accommodation.types";
 import type { RestaurantNearby as RestaurantNearbyRaw } from "../types/restaurant.types";
 import styles from "./AccommodationDetailPage.module.css";
-import michelinRestaurantIconUrl from "../../img/Michelin_Big_gourmand.png";
+import restaurantMichelinStarIconUrl from "../../img/restaurant-michelin-star-icon.png";
 
 interface NearbyRestaurant extends RestaurantNearbyRaw {
   distanceKm: number;
@@ -139,7 +139,7 @@ const hotelMarkerIcon = divIcon({
 });
 
 const restaurantMarkerImageIcon = icon({
-  iconUrl: michelinRestaurantIconUrl,
+  iconUrl: restaurantMichelinStarIconUrl,
   iconSize: [36, 36],
   iconAnchor: [18, 18],
   popupAnchor: [0, -18],

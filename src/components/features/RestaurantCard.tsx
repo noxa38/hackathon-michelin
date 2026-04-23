@@ -1,16 +1,21 @@
 import { useState } from 'react'
-import { Heart, Bookmark, CalendarCheck, MapPin, Clock, Images, RotateCw } from 'lucide-react'
+import { Heart, Bookmark, CalendarCheck, Clock, Images, RotateCw } from 'lucide-react'
 import type { Restaurant } from '../../types/restaurant.types'
 import styles from './RestaurantCard.module.css'
 import PhotoCarousel from '../ui/PhotoCarousel'
+import restaurantMichelinStarIconUrl from '../../../img/restaurant-michelin-star-icon.png'
+import michelinBigGourmandIconUrl from '../../../img/michelin-big-gourmand-icon.png'
+import michelinGreenStarIconUrl from '../../../img/michelin-green-star-icon.png'
 
 interface Props {
   restaurant: Restaurant
-  likes: number
-  onLikeChange: (restaurantId: number, nextLiked: boolean) => void
+  likes?: number
+  onLikeChange?: (restaurantId: number, nextLiked: boolean) => void
   isLiked?: boolean
   isSaved?: boolean
   onSaveClick?: (restaurantId: number) => void
+  compact?: boolean
+  showLikeButton?: boolean
 }
 
 const CUISINE_COLORS: [string, string][] = [
@@ -38,18 +43,18 @@ function AwardBadge({ stars, award, green_star }: { stars: number; award: string
       {stars >= 1 && (
         <div className={styles.starsRow}>
           {Array.from({ length: stars }, (_, i) => (
-            <img key={i} src="/etoile-michelin.png" alt="Étoile Michelin" className={styles.starImg} />
+            <img key={i} src={restaurantMichelinStarIconUrl} alt="Étoile Michelin" className={styles.starImg} />
           ))}
         </div>
       )}
       {stars === 0 && isBib && (
-        <img src="/Michelin_Big_gourmand.png" alt="Bib Gourmand" className={styles.bibImg} />
+        <img src={michelinBigGourmandIconUrl} alt="Bib Gourmand" className={styles.bibImg} />
       )}
       {stars === 0 && !isBib && green_star !== 1 && (
         <span className={`${styles.award} ${styles.awardSelected}`}>{award}</span>
       )}
       {green_star === 1 && (
-        <img src="/MICHELINGreenStar_green.png" alt="Étoile Verte Michelin" className={styles.greenStarImg} />
+        <img src={michelinGreenStarIconUrl} alt="Étoile Verte Michelin" className={styles.greenStarImg} />
       )}
     </div>
   )
@@ -62,17 +67,24 @@ export default function RestaurantCard({
   isLiked = false,
   isSaved = false,
   onSaveClick,
+  compact = false,
+  showLikeButton = true,
 }: Props) {
   const [flipped, setFlipped] = useState(false)
   const [carouselOpen, setCarouselOpen] = useState(false)
 
   const { name, address, price, cuisine, description, opening_hours, stars, award, green_star, photos } = restaurant
+  const fallbackCoverPhoto = (
+    restaurant as Restaurant & { photo_url?: string; image_url?: string; photo?: string }
+  ).photo_url
+    ?? (restaurant as Restaurant & { photo_url?: string; image_url?: string; photo?: string }).image_url
+    ?? (restaurant as Restaurant & { photo_url?: string; image_url?: string; photo?: string }).photo
   const hasPhotos = photos && photos.length > 0
-  const coverPhoto = hasPhotos ? photos[0].url : null
+  const coverPhoto = hasPhotos ? photos[0].url : fallbackCoverPhoto ?? null
 
   function handleLike(e: React.MouseEvent) {
     e.stopPropagation()
-    onLikeChange(restaurant.id, !isLiked)
+    onLikeChange?.(restaurant.id, !isLiked)
   }
 
   function handleSave(e: React.MouseEvent) {
@@ -93,7 +105,7 @@ export default function RestaurantCard({
   return (
     <>
     <div
-      className={styles.cardOuter}
+      className={`${styles.cardOuter} ${compact ? styles.compact : ''}`}
       onClick={() => setFlipped(f => !f)}
       role="button"
       tabIndex={0}
@@ -124,42 +136,43 @@ export default function RestaurantCard({
             <div className={styles.photoHint}>
               {hasPhotos ? 'Cliquer pour voir les photos' : 'Cliquer pour voir les details'}
             </div>
+          </div>
+
+          <div className={styles.frontContent}>
+            <div className={styles.frontAwardWrap}>
+              <AwardBadge stars={stars} award={award} green_star={green_star} />
+            </div>
+
+            <h2 className={styles.name}>{name}</h2>
+
+            <p className={styles.infoRow}>
+              <span>{address}</span>
+            </p>
+
+            <p className={styles.cuisine}>{cuisine}</p>
 
             <button
               type="button"
-              className={styles.moreBtnOverlay}
+              className={styles.moreBtn}
               onClick={handleMoreClick}
               aria-label={`En savoir plus sur ${name}`}
             >
               <RotateCw size={12} />
               <span>En savoir plus</span>
             </button>
-          </div>
-
-          <div className={styles.frontContent}>
-            <AwardBadge stars={stars} award={award} green_star={green_star} />
-
-            <h2 className={styles.name}>{name}</h2>
-
-            <p className={styles.infoRow}>
-              <MapPin size={12} className={styles.infoIcon} />
-              <span>{address}</span>
-            </p>
-
-            <p className={styles.cuisine}>{cuisine}</p>
-
-            <p className={styles.flipHint}>Cliquez sur la carte pour la retourner et voir les details.</p>
 
             <div className={styles.frontBottom}>
               <span className={styles.price}>{price}</span>
-              <button
-                className={`${styles.likeBtn} ${isLiked ? styles.likedActive : ''}`}
-                onClick={handleLike}
-                aria-label="Liker ce restaurant"
-              >
-                <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
-                <span>{likes}</span>
-              </button>
+              {showLikeButton && onLikeChange && (
+                <button
+                  className={`${styles.likeBtn} ${isLiked ? styles.likedActive : ''}`}
+                  onClick={handleLike}
+                  aria-label="Liker ce restaurant"
+                >
+                  <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
+                  {likes !== undefined && <span>{likes}</span>}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -188,6 +201,16 @@ export default function RestaurantCard({
                 <span>{opening_hours}</span>
               </div>
             )
+
+            if (compact) {
+              const todayHours = schedule[todayKey] ?? '—'
+              return (
+                <div className={styles.backHours}>
+                  <Clock size={13} className={styles.backHoursIcon} />
+                  <span>Aujourd&apos;hui ({todayKey}) : {todayHours}</span>
+                </div>
+              )
+            }
 
             return (
               <div className={styles.scheduleSection}>

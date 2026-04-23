@@ -4,6 +4,7 @@ import RestaurantSearch from './RestaurantSearch'
 import * as favoriteService from '../../services/favorite.service'
 import type { Restaurant } from '../../types/restaurant.types'
 import styles from './AddFavoriteModal.module.css'
+import restaurantMichelinStarIconUrl from '../../../img/restaurant-michelin-star-icon.png'
 
 interface AddFavoriteModalProps {
   isOpen: boolean
@@ -87,9 +88,16 @@ export default function AddFavoriteModal({ isOpen, onClose, token, onFavoriteAdd
                     {selectedRestaurant.city} • {selectedRestaurant.address}
                   </p>
                   {selectedRestaurant.stars > 0 && (
-                    <p className={styles.stars}>
-                      {'⭐'.repeat(selectedRestaurant.stars)}
-                    </p>
+                    <div className={styles.starsRow}>
+                      {Array.from({ length: selectedRestaurant.stars }, (_, i) => (
+                        <img
+                          key={`selected-restaurant-star-${i}`}
+                          src={restaurantMichelinStarIconUrl}
+                          alt="Étoile Michelin"
+                          className={styles.starImg}
+                        />
+                      ))}
+                    </div>
                   )}
                   {selectedRestaurant.description && (
                     <p className={styles.description}>{selectedRestaurant.description.substring(0, 150)}...</p>
