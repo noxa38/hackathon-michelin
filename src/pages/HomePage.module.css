@@ -11,7 +11,9 @@
     to bottom,
     rgba(0, 0, 0, 0.55) 0%,
     rgba(0, 0, 0, 0.7) 100%
-  );
+  ), url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&h=1280&fit=crop');
+  background-size: cover;
+  background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -177,4 +179,9 @@
   text-align: center;
   padding: 0;
   margin-top: 6px;
+}
+
+.locateLink:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
