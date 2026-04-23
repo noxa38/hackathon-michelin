@@ -1,6 +1,7 @@
 import db from "../config/db.js";
 
-const ACCOMMODATIONS_LIKED_LIST_NAME = "Hébergements likées";
+const ACCOMMODATIONS_LIKED_LIST_NAME = "Hébergements likés";
+const LEGACY_ACCOMMODATIONS_LIKED_LIST_NAME = "Hébergements likées";
 
 class Friend {
   static async searchUsers(currentUserId, query) {
@@ -13,11 +14,28 @@ class Friend {
          u.last_name,
          u.user_type,
          u.created_at,
-         EXISTS(
-           SELECT 1
-           FROM friendships f
-           WHERE f.user_id = ? AND f.friend_id = u.id
-         ) AS is_friend
+         CASE
+           WHEN EXISTS(
+             SELECT 1
+             FROM friendships f
+             WHERE f.user_id = ? AND f.friend_id = u.id
+           ) THEN 'friend'
+           WHEN EXISTS(
+             SELECT 1
+             FROM friend_requests fr
+             WHERE fr.sender_id = ?
+               AND fr.receiver_id = u.id
+               AND fr.status = 'pending'
+           ) THEN 'outgoing_pending'
+           WHEN EXISTS(
+             SELECT 1
+             FROM friend_requests fr
+             WHERE fr.sender_id = u.id
+               AND fr.receiver_id = ?
+               AND fr.status = 'pending'
+           ) THEN 'incoming_pending'
+           ELSE 'none'
+         END AS relationship_status
        FROM users u
        WHERE u.id <> ?
          AND u.user_type <> 'admin'
@@ -27,9 +45,9 @@ class Friend {
            OR u.last_name LIKE ?
            OR CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) LIKE ?
          )
-       ORDER BY is_friend DESC, u.username ASC
+       ORDER BY relationship_status = 'friend' DESC, u.username ASC
        LIMIT 20`,
-      [currentUserId, currentUserId, likeQuery, likeQuery, likeQuery, likeQuery]
+      [currentUserId, currentUserId, currentUserId, currentUserId, likeQuery, likeQuery, likeQuery, likeQuery]
     );
 
     return rows || [];
@@ -52,17 +70,76 @@ class Friend {
         throw new Error("INVALID_FRIEND");
       }
 
-      await connection.execute(
-        "INSERT IGNORE INTO friendships (user_id, friend_id) VALUES (?, ?)",
+      const [friendshipRows] = await connection.execute(
+        "SELECT 1 FROM friendships WHERE user_id = ? AND friend_id = ? LIMIT 1",
         [userId, friendId]
       );
-      await connection.execute(
-        "INSERT IGNORE INTO friendships (user_id, friend_id) VALUES (?, ?)",
+      if (friendshipRows.length) {
+        await connection.commit();
+        return { status: "already_friend" };
+      }
+
+      const [incomingPendingRows] = await connection.execute(
+        `SELECT id
+         FROM friend_requests
+         WHERE sender_id = ?
+           AND receiver_id = ?
+           AND status = 'pending'
+         LIMIT 1`,
         [friendId, userId]
+      );
+      if (incomingPendingRows.length) {
+        await connection.execute(
+          "INSERT IGNORE INTO friendships (user_id, friend_id) VALUES (?, ?)",
+          [userId, friendId]
+        );
+        await connection.execute(
+          "INSERT IGNORE INTO friendships (user_id, friend_id) VALUES (?, ?)",
+          [friendId, userId]
+        );
+        await connection.execute(
+          `UPDATE friend_requests
+           SET status = 'accepted', updated_at = CURRENT_TIMESTAMP
+           WHERE sender_id = ?
+             AND receiver_id = ?
+             AND status = 'pending'`,
+          [friendId, userId]
+        );
+        await connection.execute(
+          `UPDATE friend_requests
+           SET status = 'accepted', updated_at = CURRENT_TIMESTAMP
+           WHERE sender_id = ?
+             AND receiver_id = ?
+             AND status = 'pending'`,
+          [userId, friendId]
+        );
+        await connection.commit();
+        return { status: "accepted" };
+      }
+
+      const [outgoingPendingRows] = await connection.execute(
+        `SELECT id
+         FROM friend_requests
+         WHERE sender_id = ?
+           AND receiver_id = ?
+           AND status = 'pending'
+         LIMIT 1`,
+        [userId, friendId]
+      );
+      if (outgoingPendingRows.length) {
+        await connection.commit();
+        return { status: "already_requested" };
+      }
+
+      await connection.execute(
+        `INSERT INTO friend_requests (sender_id, receiver_id, status)
+         VALUES (?, ?, 'pending')
+         ON DUPLICATE KEY UPDATE status = 'pending', updated_at = CURRENT_TIMESTAMP`,
+        [userId, friendId]
       );
 
       await connection.commit();
-      return true;
+      return { status: "requested" };
     } catch (error) {
       await connection.rollback();
       throw error;
@@ -91,16 +168,88 @@ class Friend {
            FROM list_accommodations la
            JOIN lists l ON l.id = la.list_id
            WHERE l.user_id = u.id
-             AND l.name = ?
+             AND l.name IN (?, ?)
          ) AS liked_accommodations
        FROM friendships f
        JOIN users u ON u.id = f.friend_id
        WHERE f.user_id = ?
        ORDER BY u.first_name ASC, u.last_name ASC, u.username ASC`,
-      [ACCOMMODATIONS_LIKED_LIST_NAME, userId]
+      [ACCOMMODATIONS_LIKED_LIST_NAME, LEGACY_ACCOMMODATIONS_LIKED_LIST_NAME, userId]
     );
 
     return rows || [];
+  }
+
+  static async getIncomingFriendRequests(userId) {
+    const [rows] = await db.execute(
+      `SELECT
+         fr.id,
+         fr.created_at,
+         u.id AS sender_id,
+         u.username,
+         u.first_name,
+         u.last_name,
+         u.user_type
+       FROM friend_requests fr
+       JOIN users u ON u.id = fr.sender_id
+       WHERE fr.receiver_id = ?
+         AND fr.status = 'pending'
+       ORDER BY fr.created_at DESC`,
+      [userId]
+    );
+
+    return rows || [];
+  }
+
+  static async respondToFriendRequest(userId, requestId, action) {
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      const [requests] = await connection.execute(
+        `SELECT id, sender_id, receiver_id
+         FROM friend_requests
+         WHERE id = ?
+           AND receiver_id = ?
+           AND status = 'pending'
+         LIMIT 1`,
+        [requestId, userId]
+      );
+
+      if (!requests.length) {
+        throw new Error("REQUEST_NOT_FOUND");
+      }
+
+      const request = requests[0];
+
+      if (action === "accept") {
+        await connection.execute(
+          "INSERT IGNORE INTO friendships (user_id, friend_id) VALUES (?, ?)",
+          [request.sender_id, request.receiver_id]
+        );
+        await connection.execute(
+          "INSERT IGNORE INTO friendships (user_id, friend_id) VALUES (?, ?)",
+          [request.receiver_id, request.sender_id]
+        );
+        await connection.execute(
+          "UPDATE friend_requests SET status = 'accepted', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+          [requestId]
+        );
+      } else {
+        await connection.execute(
+          "UPDATE friend_requests SET status = 'rejected', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+          [requestId]
+        );
+      }
+
+      await connection.commit();
+      return true;
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   }
 
   static async getFriendPublicProfile(userId, friendId) {
@@ -143,9 +292,9 @@ class Friend {
            FROM list_accommodations la
            JOIN lists l ON l.id = la.list_id
            WHERE l.user_id = ?
-             AND l.name = ?
+             AND l.name IN (?, ?)
          ) AS liked_accommodations`,
-      [friendId, friendId, ACCOMMODATIONS_LIKED_LIST_NAME]
+      [friendId, friendId, ACCOMMODATIONS_LIKED_LIST_NAME, LEGACY_ACCOMMODATIONS_LIKED_LIST_NAME]
     );
 
     const [restaurantFavorites] = await db.execute(
@@ -208,10 +357,10 @@ class Friend {
        JOIN list_accommodations la ON la.list_id = l.id
        JOIN accommodation a ON a.id = la.accommodation_id
        WHERE l.user_id = ?
-         AND l.name = ?
+         AND l.name IN (?, ?)
        ORDER BY la.added_at DESC
        LIMIT 4`,
-      [friendId, ACCOMMODATIONS_LIKED_LIST_NAME]
+      [friendId, ACCOMMODATIONS_LIKED_LIST_NAME, LEGACY_ACCOMMODATIONS_LIKED_LIST_NAME]
     );
 
     return {

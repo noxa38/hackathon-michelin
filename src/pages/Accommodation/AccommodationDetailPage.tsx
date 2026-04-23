@@ -295,7 +295,7 @@ export default function AccommodationDetailPage() {
                 onClick={toggleFavorite}
               >
                 <Heart size={16} />
-                <span>{isFavorite ? "Liké" : "Like"}</span>
+                <span>{isFavorite ? "J'aime" : "J'aime"}</span>
               </button>
               {hotelAccessUrl ? (
                 <a

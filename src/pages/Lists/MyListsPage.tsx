@@ -16,7 +16,7 @@ interface ListCounts {
 }
 
 const RESTAURANTS_LIKED_LIST_NAME = 'Restaurants likés'
-const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likées'
+const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likés'
 
 function MyListsPage() {
   const navigate = useNavigate()

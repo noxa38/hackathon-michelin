@@ -127,7 +127,7 @@ export default function SaveToListModal({
                 disabled={newListName.trim().length > 0}
               >
                 <option value="">Sélectionner une liste...</option>
-                {lists.filter(l => l.name !== 'Restaurants likés' && l.name !== 'Hébergements likées').map((list) => (
+                {lists.filter(l => l.name !== 'Restaurants likés' && l.name !== 'Hébergements likés' && l.name !== 'Hébergements likées').map((list) => (
                   <option key={list.id} value={list.id}>
                     {list.name}
                   </option>

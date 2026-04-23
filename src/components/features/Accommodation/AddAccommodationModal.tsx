@@ -6,7 +6,7 @@ import type { Accommodation } from '../../../types/accommodation.types'
 import styles from './AddAccommodationModal.module.css'
 import accommodationMichelinStarIconUrl from '../../../assets/img/accommodation-michelin-star-icon.svg'
 
-const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likées'
+const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements préférés'
 
 function normalizeAccommodationId(value: string | number): number {
   const rawValue = String(value)

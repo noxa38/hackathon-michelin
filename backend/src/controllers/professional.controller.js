@@ -38,6 +38,21 @@ export const createProfessionalRequest = async (req, res) => {
 };
 
 /**
+ * Get current user's professional requests
+ * GET /api/professional/my-requests
+ */
+export const getMyProfessionalRequests = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const requests = await User.getUserProfessionalRequests(userId);
+    res.status(200).json(requests);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch user requests", error: err.message });
+  }
+};
+
+/**
  * Get professional requests (admin only)
  * GET /api/admin/professional-requests
  */
@@ -188,10 +203,12 @@ export const updateProfessionalRestaurant = async (req, res) => {
       "country",
       "price",
       "cuisine",
+      "phone",
       "phone_number",
       "website_url",
       "award",
       "menu",
+      "photos",
       "green_star",
       "facilities",
       "opening_hours",

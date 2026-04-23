@@ -18,7 +18,8 @@ export async function searchUsers(req, res) {
         lastName: user.last_name,
         userType: user.user_type,
         createdAt: user.created_at,
-        isFriend: Boolean(user.is_friend),
+        relationshipStatus: user.relationship_status || "none",
+        isFriend: user.relationship_status === "friend",
       }))
     );
   } catch (error) {
@@ -40,8 +41,17 @@ export async function addFriend(req, res) {
       return res.status(400).json({ error: "Vous ne pouvez pas vous ajouter vous-même" });
     }
 
-    await Friend.addFriend(userId, friendId);
-    return res.json({ message: "Ami ajouté" });
+    const result = await Friend.addFriend(userId, friendId);
+    if (result.status === "requested") {
+      return res.json({ message: "Demande d'ami envoyée", status: result.status });
+    }
+    if (result.status === "accepted") {
+      return res.json({ message: "Demande d'ami acceptée", status: result.status });
+    }
+    if (result.status === "already_requested") {
+      return res.json({ message: "Demande déjà envoyée", status: result.status });
+    }
+    return res.json({ message: "Déjà ami", status: result.status });
   } catch (error) {
     if (error.message === "USER_NOT_FOUND") {
       return res.status(404).json({ error: "Utilisateur introuvable" });
@@ -52,6 +62,54 @@ export async function addFriend(req, res) {
 
     console.error("Add friend error:", error);
     res.status(500).json({ error: "Erreur lors de l'ajout de l'ami" });
+  }
+}
+
+export async function getIncomingFriendRequests(req, res) {
+  try {
+    const userId = req.user.id;
+    const requests = await Friend.getIncomingFriendRequests(userId);
+
+    return res.json(
+      requests.map((request) => ({
+        id: request.id,
+        createdAt: request.created_at,
+        sender: {
+          id: request.sender_id,
+          username: request.username,
+          firstName: request.first_name,
+          lastName: request.last_name,
+          userType: request.user_type,
+        },
+      }))
+    );
+  } catch (error) {
+    console.error("Get incoming friend requests error:", error);
+    res.status(500).json({ error: "Erreur lors de la récupération des demandes d'amis" });
+  }
+}
+
+export async function respondToFriendRequest(req, res) {
+  try {
+    const userId = req.user.id;
+    const requestId = Number(req.params.requestId);
+    const action = String(req.body.action || "").toLowerCase();
+
+    if (!Number.isFinite(requestId)) {
+      return res.status(400).json({ error: "ID de demande invalide" });
+    }
+    if (action !== "accept" && action !== "reject") {
+      return res.status(400).json({ error: "Action invalide" });
+    }
+
+    await Friend.respondToFriendRequest(userId, requestId, action);
+    return res.json({ message: action === "accept" ? "Demande acceptée" : "Demande refusée" });
+  } catch (error) {
+    if (error.message === "REQUEST_NOT_FOUND") {
+      return res.status(404).json({ error: "Demande introuvable" });
+    }
+    console.error("Respond friend request error:", error);
+    res.status(500).json({ error: "Erreur lors de la réponse à la demande d'ami" });
   }
 }
 

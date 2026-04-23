@@ -14,6 +14,7 @@ DELETE FROM accommodation_rooms;
 DELETE FROM accommodation;
 DELETE FROM restaurants;
 DELETE FROM lists;
+DELETE FROM users;
 
 -- ============================================================
 -- USERS

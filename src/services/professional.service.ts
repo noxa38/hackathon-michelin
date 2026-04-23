@@ -10,6 +10,20 @@ import type {
 
 const API_BASE = '/api'
 
+export async function getMyProfessionalRequests(token: string): Promise<ProfessionalRequest[]> {
+  const response = await fetch(`${API_BASE}/professional/my-requests`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch your requests')
+  }
+
+  return response.json()
+}
+
 export async function createProfessionalRequest(
   token: string, 
   data: ProfessionalFormData

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { AlertCircle, CheckCircle, Upload } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { AlertCircle, CheckCircle, Clock, Upload } from 'lucide-react'
 import * as professionalService from '../../../services/professional.service'
 import { useAuth } from '../../../contexts/AuthContext'
 import styles from './ProfessionalRequestForm.module.css'
@@ -16,7 +16,23 @@ export default function ProfessionalRequestForm({ restaurants, onSuccess }: Prof
   const [success, setSuccess] = useState(false)
   const [restaurantId, setRestaurantId] = useState('')
   const [proofFile, setProofFile] = useState<File | null>(null)
+  const [pendingRequest, setPendingRequest] = useState<{ restaurantName: string; createdAt: string } | null>(null)
   const token = localStorage.getItem('auth_token')
+
+  useEffect(() => {
+    if (!token) return
+    professionalService.getMyProfessionalRequests(token)
+      .then((requests) => {
+        const pending = requests.find((r) => r.status === 'pending')
+        if (pending) {
+          setPendingRequest({
+            restaurantName: (pending as unknown as { restaurantName: string }).restaurantName,
+            createdAt: (pending as unknown as { createdAt: string }).createdAt,
+          })
+        }
+      })
+      .catch(() => {})
+  }, [token])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -63,6 +79,21 @@ export default function ProfessionalRequestForm({ restaurants, onSuccess }: Prof
     } finally {
       setLoading(false)
     }
+  }
+
+  if (pendingRequest) {
+    return (
+      <div className={styles.container}>
+        <h2 className={styles.title}>Gérer mon établissement</h2>
+        <div className={`${styles.alert} ${styles.pendingAlert}`}>
+          <Clock size={20} />
+          <div>
+            <strong>Demande en attente de validation</strong>
+            <p>Vous avez soumis une demande pour <strong>{pendingRequest.restaurantName}</strong> le {new Date(pendingRequest.createdAt).toLocaleDateString('fr-FR')}. Un administrateur examinera votre demande prochainement.</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

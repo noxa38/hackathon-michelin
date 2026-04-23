@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS restaurant_photos;
 DROP TABLE IF EXISTS accommodation_rooms;
 DROP TABLE IF EXISTS accommodation_favorites;
 DROP TABLE IF EXISTS favorites;
+DROP TABLE IF EXISTS friend_requests;
 DROP TABLE IF EXISTS friendships;
 DROP TABLE IF EXISTS accommodation;
 DROP TABLE IF EXISTS restaurants;
@@ -49,6 +50,22 @@ CREATE TABLE friendships (
   CONSTRAINT fk_friendships_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT fk_friendships_friend FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE KEY unique_friendship (user_id, friend_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- FRIEND_REQUESTS table
+-- ============================================================
+
+CREATE TABLE friend_requests (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  sender_id  INT NOT NULL,
+  receiver_id INT NOT NULL,
+  status     ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_friend_requests_sender FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_friend_requests_receiver FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_friend_request (sender_id, receiver_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================

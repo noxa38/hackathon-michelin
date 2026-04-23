@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Heart, Bookmark, CalendarCheck, Clock, Images, RotateCw } from 'lucide-react'
+import { Heart, Bookmark, BookOpen, CalendarCheck, Clock, Images, RotateCw } from 'lucide-react'
 import type { Restaurant } from '../../../types/restaurant.types'
 import styles from './RestaurantCard.module.css'
 import PhotoCarousel from '../../ui/PhotoCarousel'
@@ -113,8 +113,9 @@ export default function RestaurantCard({
 }: Props) {
   const [flipped, setFlipped] = useState(false)
   const [carouselOpen, setCarouselOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
 
-  const { name, address, city, country, location, price, cuisine, description, opening_hours, stars, award, green_star, photos } = restaurant
+  const { name, address, city, country, location, price, cuisine, description, opening_hours, stars, award, green_star, photos, menu } = restaurant
   const displayPrice = normalizePriceDisplay(price)
   const cityCountry = formatCityCountry(city, country, location)
   const generatedFallbackCover = buildRestaurantFallbackImage(restaurant.id, cuisine, city)
@@ -144,6 +145,11 @@ export default function RestaurantCard({
   function handleMoreClick(e: React.MouseEvent) {
     e.stopPropagation()
     setFlipped(true)
+  }
+
+  function handleMenuClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    if (menu) setMenuOpen(true)
   }
 
   return (
@@ -235,6 +241,18 @@ export default function RestaurantCard({
 
           <p className={styles.backDescription}>{description}</p>
 
+          {menu ? (
+            <div className={styles.menuPreviewSection}>
+              <p className={styles.menuPreviewLabel}>Menu</p>
+              <img
+                src={menu}
+                alt={`Menu de ${name}`}
+                className={styles.menuPreviewImage}
+                loading="lazy"
+              />
+            </div>
+          ) : null}
+
           {opening_hours && (() => {
             const DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] as const
             // JS getDay(): 0=Sun,1=Mon…6=Sat → index dans DAYS (Lun=0…Dim=6)
@@ -291,6 +309,16 @@ export default function RestaurantCard({
           })()}
 
           <div className={styles.backActions}>
+            {menu ? (
+              <button
+                className={styles.btnMenu}
+                onClick={handleMenuClick}
+                aria-label={`Consulter le menu de ${name}`}
+              >
+                <BookOpen size={15} />
+                Consulter le menu
+              </button>
+            ) : null}
             <button
               className={styles.btnReserve}
               onClick={e => e.stopPropagation()}
@@ -317,6 +345,14 @@ export default function RestaurantCard({
         photos={photos!}
         restaurantName={name}
         onClose={() => setCarouselOpen(false)}
+      />
+    )}
+
+    {menuOpen && menu && (
+      <PhotoCarousel
+        photos={[{ url: menu, position: 1, caption: `Menu de ${name}` }]}
+        restaurantName={`${name} · Menu`}
+        onClose={() => setMenuOpen(false)}
       />
     )}
   </>

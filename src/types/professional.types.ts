@@ -24,10 +24,12 @@ export interface ProfessionalRestaurant {
   city?: string
   country?: string
   cuisine?: string
+  phone?: string
   phone_number?: string
   award?: string
-  hours?: Record<string, unknown>
-  menu?: Record<string, unknown>
+  opening_hours?: string
+  hours?: Record<string, unknown> | string
+  menu?: Record<string, unknown> | string
   description?: string
   prices?: Record<string, unknown>
   photos?: string[]

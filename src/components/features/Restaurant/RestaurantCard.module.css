@@ -437,6 +437,29 @@
   border-radius: 4px;
 }
 
+.menuPreviewSection {
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+
+.menuPreviewLabel {
+  margin: 0 0 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #9ca3af;
+}
+
+.menuPreviewImage {
+  width: 100%;
+  max-height: 132px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #ececec;
+  background: #f8fafc;
+}
+
 /* ── Horaires d'ouverture (fallback texte) ─────────────────── */
 .backHours {
   display: flex;
@@ -535,13 +558,15 @@
 .backActions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   flex-shrink: 0;
   margin-top: 12px;
 }
 
 .btnReserve,
-.btnSave {
+.btnSave,
+.btnMenu {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -565,6 +590,24 @@
 
 .btnReserve:hover {
   background: #c0001e;
+}
+
+.btnMenu {
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 13px;
+  border: 1.5px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.btnMenu:hover {
+  border-color: var(--color-red);
+  color: var(--color-red);
+  background: #fff5f7;
 }
 
 .btnSave {

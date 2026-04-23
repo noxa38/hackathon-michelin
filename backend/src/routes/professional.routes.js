@@ -3,6 +3,7 @@ import { authenticateToken } from "../middleware/auth.middleware.js";
 import { isAdmin, isProfessionalOrAdmin } from "../middleware/role.middleware.js";
 import {
   createProfessionalRequest,
+  getMyProfessionalRequests,
   getProfessionalRequests,
   approveProfessionalRequest,
   rejectProfessionalRequest,
@@ -20,6 +21,7 @@ const router = express.Router();
 
 // Professional routes
 router.post("/professional/request", authenticateToken, createProfessionalRequest);
+router.get("/professional/my-requests", authenticateToken, getMyProfessionalRequests);
 router.get("/professional/restaurants", authenticateToken, getProfessionalRestaurants);
 router.put("/professional/restaurants/:restaurantId", authenticateToken, updateProfessionalRestaurant);
 

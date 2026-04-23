@@ -19,6 +19,7 @@ export interface Restaurant {
   michelin_url: string
   website_url: string
   award: string
+  menu?: string
   stars: number
   green_star: number
   facilities: string

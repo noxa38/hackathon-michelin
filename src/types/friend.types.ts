@@ -8,7 +8,20 @@ export interface FriendSearchResult {
   lastName: string
   userType: 'individual' | 'professional' | 'admin'
   createdAt: string
+  relationshipStatus: 'none' | 'friend' | 'outgoing_pending' | 'incoming_pending'
   isFriend: boolean
+}
+
+export interface FriendRequestItem {
+  id: number
+  createdAt: string
+  sender: {
+    id: number
+    username: string
+    firstName: string
+    lastName: string
+    userType: 'individual' | 'professional' | 'admin'
+  }
 }
 
 export interface FriendListItem {

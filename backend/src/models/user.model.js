@@ -97,6 +97,23 @@ class User {
     }
   }
 
+  static async getUserProfessionalRequests(userId) {
+    try {
+      const [rows] = await db.query(
+        `SELECT pr.id, pr.restaurant_id AS restaurantId, pr.status, pr.rejection_reason AS rejectionReason,
+                pr.created_at AS createdAt, r.name AS restaurantName
+         FROM professional_requests pr
+         JOIN restaurants r ON pr.restaurant_id = r.id
+         WHERE pr.user_id = ?
+         ORDER BY pr.created_at DESC`,
+        [userId]
+      );
+      return rows;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   static async getPendingProfessionalRequests() {
     try {
       const [rows] = await db.query(`
@@ -228,7 +245,31 @@ class User {
         JOIN restaurants r ON pr.restaurant_id = r.id
         WHERE pr.user_id = ?
       `, [userId]);
-      return rows;
+
+      if (!rows.length) return rows;
+
+      const restaurantIds = rows.map((row) => row.restaurant_id || row.id);
+      const placeholders = restaurantIds.map(() => "?").join(",");
+      const [photoRows] = await db.query(
+        `SELECT restaurant_id, url, position
+         FROM restaurant_photos
+         WHERE restaurant_id IN (${placeholders})
+         ORDER BY restaurant_id ASC, position ASC`,
+        restaurantIds
+      );
+
+      const photosByRestaurant = new Map();
+      for (const photo of photoRows) {
+        if (!photosByRestaurant.has(photo.restaurant_id)) {
+          photosByRestaurant.set(photo.restaurant_id, []);
+        }
+        photosByRestaurant.get(photo.restaurant_id).push(photo.url);
+      }
+
+      return rows.map((row) => ({
+        ...row,
+        photos: photosByRestaurant.get(row.restaurant_id || row.id) || [],
+      }));
     } catch (err) {
       throw err;
     }
@@ -256,6 +297,11 @@ class User {
     const restaurantValues = [];
 
     Object.entries(data).forEach(([key, value]) => {
+      if (key === "phone_number") {
+        restaurantSet.push("phone = ?");
+        restaurantValues.push(value);
+        return;
+      }
       if (restaurantEditableFields.has(key)) {
         restaurantSet.push(`${key} = ?`);
         restaurantValues.push(value);
@@ -271,6 +317,21 @@ class User {
           `UPDATE restaurants SET ${restaurantSet.join(", ")} WHERE id = ?`,
           [...restaurantValues, restaurantId]
         );
+      }
+
+      if (Array.isArray(data.photos)) {
+        await connection.query("DELETE FROM restaurant_photos WHERE restaurant_id = ?", [restaurantId]);
+        const normalizedPhotos = data.photos
+          .map((photo) => String(photo || "").trim())
+          .filter((photo) => photo.length > 0)
+          .slice(0, 12);
+
+        for (let index = 0; index < normalizedPhotos.length; index += 1) {
+          await connection.query(
+            "INSERT INTO restaurant_photos (restaurant_id, url, position) VALUES (?, ?, ?)",
+            [restaurantId, normalizedPhotos[index], index + 1]
+          );
+        }
       }
 
       await connection.commit();

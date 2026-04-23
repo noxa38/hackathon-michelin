@@ -142,7 +142,7 @@ import SaveToListModal from "../../components/features/Lists/SaveToListModal";
 import styles from "./AccommodationsPage.module.css";
 import accommodationMichelinStarIconUrl from '../../assets/img/accommodation-michelin-star-icon.svg';
 
-const ACCOMMODATIONS_LIKED_LIST_NAME = "Hébergements likées";
+const ACCOMMODATIONS_LIKED_LIST_NAME = "Hébergements likés";
 const DISTINCTION_OPTIONS = ["5", "4", "3", "2", "1"] as const;
 
 function getAccommodationAwardStars(accommodation: Accommodation): number {

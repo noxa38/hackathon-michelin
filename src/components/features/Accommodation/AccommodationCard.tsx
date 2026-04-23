@@ -4,7 +4,6 @@ import {
   Bookmark,
   Heart,
   Images,
-  MapPin,
   RotateCw,
 } from "lucide-react";
 import type { Accommodation } from "../../../types/accommodation.types";
@@ -67,15 +66,6 @@ function formatPrice(price?: number): string {
   }).format(price)} / nuit`;
 }
 
-function formatAddress(address?: string, city?: string, country?: string): string {
-  const parts = [address, city, country]
-    .map((value) => value?.trim())
-    .filter(Boolean)
-
-  if (parts.length === 0) return "Adresse non renseignée"
-  return parts.join(" · ")
-}
-
 function buildCarouselPhotos(accommodation: Accommodation, fallbackImage?: string): RestaurantPhoto[] {
   const roomPhotoUrls = (accommodation.room_details ?? [])
     .map((room) => room.photo_url)
@@ -112,8 +102,6 @@ export default function AccommodationCard({
     id,
     name,
     city,
-    category,
-    award,
     address,
     image_url,
     photo_url,
@@ -146,7 +134,6 @@ export default function AccommodationCard({
     ? lazyLoadedPhotos
     : carouselPhotos;
   const roundedStars = getAccommodationAwardStars(accommodation);
-  const addressLabel = formatAddress(address, city, accommodation.country);
 
   // Pre-fetch full photo list in background so badge count shows immediately
   React.useEffect(() => {
@@ -259,12 +246,12 @@ export default function AccommodationCard({
               </div>
             )}
             <h2 className={styles.name}>{name}</h2>
-            <p className={styles.infoRow}><span>{city}</span></p>
-            <p className={`${styles.infoRow} ${styles.addressRow}`}>
-              <MapPin size={13} />
-              <span>{addressLabel}</span>
+            <p className={styles.infoRow}>
+              <span>{address || "Adresse non renseignée"}</span>
             </p>
-            <p className={styles.cuisine}>{award || category || "Hébergement"}</p>
+            <p className={styles.infoRow}>
+              <span>{[city, accommodation.country].filter(Boolean).join(" · ") || city}</span>
+            </p>
             <button className={styles.moreBtn} onClick={(e) => { e.stopPropagation(); handleFlip(e); }}>
               <RotateCw size={12} /><span>En savoir plus</span>
             </button>

@@ -961,6 +961,10 @@
   gap: 12px;
 }
 
+.friendRequestsPanel {
+  margin-top: 16px;
+}
+
 .friendSearchCard {
   display: flex;
   align-items: center;
@@ -1018,6 +1022,43 @@
 .friendAddButton:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.friendRequestActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.friendAcceptButton,
+.friendRejectButton {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.friendAcceptButton {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.32);
+  color: #047857;
+}
+
+.friendAcceptButton:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.friendRejectButton {
+  background: rgba(228, 0, 43, 0.08);
+  border-color: rgba(228, 0, 43, 0.24);
+  color: var(--color-red);
+}
+
+.friendRejectButton:hover {
+  background: rgba(228, 0, 43, 0.14);
 }
 
 .friendsLayout {
@@ -1686,6 +1727,156 @@
     padding-top: 8px;
     margin-top: 2px;
   }
+}
+
+.establishmentEditorLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+
+  @media (max-width: 1180px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.establishmentAdminForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+}
+
+.establishmentAdminField,
+.establishmentAdminFieldFull {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.establishmentAdminFieldFull {
+  grid-column: 1 / -1;
+}
+
+.establishmentAdminLabel {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.establishmentAdminInput {
+  width: 100%;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 0.92rem;
+  color: #0f172a;
+  font-family: var(--font-family);
+  background: #fff;
+}
+
+.establishmentAdminTextarea {
+  width: 100%;
+  border: 1px solid #dbe4ef;
+  border-radius: 10px;
+  min-height: 84px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  color: #0f172a;
+  font-family: var(--font-family);
+  resize: vertical;
+  background: #fff;
+}
+
+.establishmentAdminInput:focus {
+  border-color: #94a3b8;
+  outline: none;
+}
+
+.establishmentAdminTextarea:focus {
+  border-color: #94a3b8;
+  outline: none;
+}
+
+.establishmentAdminInput:disabled {
+  background: #f8fafc;
+  color: #475569;
+}
+
+.establishmentImagePreview {
+  width: 100%;
+  max-width: 220px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.establishmentPhotoInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.establishmentPhotoRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: 760px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.establishmentPhotoRemove {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(228, 0, 43, 0.22);
+  background: rgba(228, 0, 43, 0.06);
+  color: var(--color-red);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.establishmentPhotoPreviewGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.establishmentAdminActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 6px;
+
+  @media (max-width: 760px) {
+    flex-direction: column;
+  }
+}
+
+.friendProfileLoadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 200px;
 }
 
 @media (max-width: 640px) {

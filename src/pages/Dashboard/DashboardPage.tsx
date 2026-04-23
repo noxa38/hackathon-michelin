@@ -19,11 +19,13 @@ import type { User as UserType, List } from '../../types/auth.types'
 import type { Restaurant } from '../../types/restaurant.types'
 import type { Accommodation } from '../../types/accommodation.types'
 import type { ProfessionalRestaurant } from '../../types/professional.types'
-import type { FriendListItem, FriendPublicProfile, FriendSearchResult } from '../../types/friend.types'
+import type { FriendListItem, FriendPublicProfile, FriendRequestItem, FriendSearchResult } from '../../types/friend.types'
 import styles from './DashboardPage.module.css'
 
 const RESTAURANTS_LIKED_LIST_NAME = 'Restaurants likés'
-const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likées'
+const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likés'
+const LEGACY_ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likées'
+const ACCOMMODATIONS_FAVORITES_LIST_NAME = 'Hébergements préférés'
 
 function getInitialDashboardRestaurantLikeCount(restaurant: Restaurant): number {
   const starsBonus = restaurant.stars * 70
@@ -52,6 +54,19 @@ interface ManagedEstablishmentFormData {
   country: string
   cuisine: string
   phone_number: string
+  menu: string
+  opening_hours: string
+  photos: string[]
+}
+
+function coerceToEditableText(value: unknown): string {
+  if (value == null) return ''
+  if (typeof value === 'string') return value
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return ''
+  }
 }
 
 export default function DashboardPage() {
@@ -91,6 +106,7 @@ export default function DashboardPage() {
   const [friendSearchResults, setFriendSearchResults] = useState<FriendSearchResult[]>([])
   const [friendSearchLoading, setFriendSearchLoading] = useState(false)
   const [friends, setFriends] = useState<FriendListItem[]>([])
+  const [incomingFriendRequests, setIncomingFriendRequests] = useState<FriendRequestItem[]>([])
   const [selectedFriendProfile, setSelectedFriendProfile] = useState<FriendPublicProfile | null>(null)
   const [friendProfileLoading, setFriendProfileLoading] = useState(false)
   const [establishmentFormData, setEstablishmentFormData] = useState<ManagedEstablishmentFormData>({
@@ -100,13 +116,16 @@ export default function DashboardPage() {
     country: '',
     cuisine: '',
     phone_number: '',
+    menu: '',
+    opening_hours: '',
+    photos: [],
   })
 
   const token = authService.getToken()
 
   async function loadAccommodationFavoritesFromLikedList(currentToken: string, currentLists?: List[]) {
     const listsData = currentLists || await listService.getLists(currentToken)
-    const likedList = listsData.find((list) => list.name === ACCOMMODATIONS_LIKED_LIST_NAME)
+    const likedList = listsData.find((list) => list.name === ACCOMMODATIONS_FAVORITES_LIST_NAME)
     if (!likedList) {
       setAccommodationFavorites([])
       return
@@ -131,7 +150,9 @@ export default function DashboardPage() {
       setLikedRestaurants(0)
     }
 
-    const likedAccommodationsList = listsData.find((list) => list.name === ACCOMMODATIONS_LIKED_LIST_NAME)
+    const likedAccommodationsList = listsData.find((list) =>
+      list.name === ACCOMMODATIONS_LIKED_LIST_NAME || list.name === LEGACY_ACCOMMODATIONS_LIKED_LIST_NAME,
+    )
     if (likedAccommodationsList) {
       try {
         const likedAccommodationsItems = await listService.getListAccommodations(currentToken, likedAccommodationsList.id)
@@ -174,6 +195,8 @@ export default function DashboardPage() {
         await loadLikedStats(token!, listsData)
         const friendsData = await friendService.getFriends(token!).catch(() => [])
         setFriends(friendsData)
+        const incomingRequests = await friendService.getIncomingFriendRequests(token!).catch(() => [])
+        setIncomingFriendRequests(incomingRequests)
 
         const restaurantsData = await fetchAllRestaurants().catch(() => [])
         setRestaurants(restaurantsData)
@@ -358,7 +381,7 @@ export default function DashboardPage() {
 
   async function handleRemoveAccommodationFavorite(accommodationId: number | string) {
     if (!token) return
-    const likedList = lists.find((list) => list.name === ACCOMMODATIONS_LIKED_LIST_NAME)
+    const likedList = lists.find((list) => list.name === ACCOMMODATIONS_FAVORITES_LIST_NAME)
     if (!likedList) return
 
     const numericId = Number(String(accommodationId).replace(/^[a]-/, ''))
@@ -417,14 +440,47 @@ export default function DashboardPage() {
   async function handleAddFriend(friendId: number) {
     if (!token) return
     try {
-      await friendService.addFriend(token, friendId)
+      const result = await friendService.addFriend(token, friendId)
       const refreshedFriends = await friendService.getFriends(token)
+      const incomingRequests = await friendService.getIncomingFriendRequests(token).catch(() => [])
       setFriends(refreshedFriends)
+      setIncomingFriendRequests(incomingRequests)
       setFriendSearchResults((current) => current.map((entry) => (
-        entry.id === friendId ? { ...entry, isFriend: true } : entry
+        entry.id === friendId
+          ? {
+              ...entry,
+              relationshipStatus: result.status === 'accepted' || result.status === 'already_friend'
+                ? 'friend'
+                : 'outgoing_pending',
+              isFriend: result.status === 'accepted' || result.status === 'already_friend',
+            }
+          : entry
       )))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajout de l\'ami')
+    }
+  }
+
+  async function handleRespondToFriendRequest(requestId: number, action: 'accept' | 'reject') {
+    if (!token) return
+    try {
+      await friendService.respondToFriendRequest(token, requestId, action)
+      const [refreshedFriends, refreshedRequests] = await Promise.all([
+        friendService.getFriends(token),
+        friendService.getIncomingFriendRequests(token),
+      ])
+      setFriends(refreshedFriends)
+      setIncomingFriendRequests(refreshedRequests)
+      setFriendSearchResults((current) => current.map((entry) => {
+        const request = incomingFriendRequests.find((item) => item.id === requestId)
+        if (!request || entry.id !== request.sender.id) return entry
+        if (action === 'accept') {
+          return { ...entry, relationshipStatus: 'friend', isFriend: true }
+        }
+        return { ...entry, relationshipStatus: 'none', isFriend: false }
+      }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la réponse à la demande')
     }
   }
 
@@ -475,12 +531,12 @@ export default function DashboardPage() {
 
     try {
       if (isLiked) {
-        const likedList = lists.find((list) => list.name === ACCOMMODATIONS_LIKED_LIST_NAME)
+        const likedList = lists.find((list) => list.name === ACCOMMODATIONS_FAVORITES_LIST_NAME)
         if (likedList) {
           await listService.removeAccommodationFromList(token, likedList.id, numericId)
         }
       } else {
-        const likedList = await listService.findOrCreateList(token, ACCOMMODATIONS_LIKED_LIST_NAME)
+        const likedList = await listService.findOrCreateList(token, ACCOMMODATIONS_FAVORITES_LIST_NAME)
         await listService.addAccommodationToList(token, likedList.id, numericId, accommodation.source || 'accommodation')
       }
 
@@ -524,7 +580,10 @@ export default function DashboardPage() {
       city: establishment.city || '',
       country: establishment.country || '',
       cuisine: establishment.cuisine || '',
-      phone_number: establishment.phone_number || '',
+      phone_number: establishment.phone_number || establishment.phone || '',
+      menu: coerceToEditableText(establishment.menu),
+      opening_hours: coerceToEditableText(establishment.opening_hours ?? establishment.hours),
+      photos: establishment.photos?.length ? establishment.photos : [''],
     })
   }
 
@@ -537,6 +596,9 @@ export default function DashboardPage() {
       country: '',
       cuisine: '',
       phone_number: '',
+      menu: '',
+      opening_hours: '',
+      photos: [],
     })
   }
 
@@ -551,6 +613,9 @@ export default function DashboardPage() {
         country: establishmentFormData.country.trim(),
         cuisine: establishmentFormData.cuisine.trim(),
         phone_number: establishmentFormData.phone_number.trim(),
+        menu: establishmentFormData.menu.trim(),
+        opening_hours: establishmentFormData.opening_hours.trim(),
+        photos: establishmentFormData.photos.map((photo) => photo.trim()).filter(Boolean),
       })
 
       await loadManagedEstablishments(token)
@@ -1039,82 +1104,169 @@ export default function DashboardPage() {
                         </h3>
 
                         {editingEstablishmentId === getEstablishmentRestaurantId(establishment) ? (
-                          <div className={styles.establishmentFields}>
-                            <div className={styles.establishmentField}>
-                              <span className={styles.establishmentLabel}>Nom</span>
-                              <input
-                                type="text"
-                                value={establishmentFormData.name}
-                                onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, name: e.target.value })}
-                                className={styles.establishmentInput}
-                              />
-                            </div>
+                          <div className={styles.establishmentAdminForm}>
+                              <div className={styles.establishmentAdminField}>
+                                <span className={styles.establishmentAdminLabel}>Nom</span>
+                                <input
+                                  type="text"
+                                  value={establishmentFormData.name}
+                                  onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, name: e.target.value })}
+                                  className={styles.establishmentAdminInput}
+                                />
+                              </div>
 
-                            <div className={styles.establishmentField}>
-                              <span className={styles.establishmentLabel}>Adresse</span>
-                              <input
-                                type="text"
-                                value={establishmentFormData.address}
-                                onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, address: e.target.value })}
-                                className={styles.establishmentInput}
-                              />
-                            </div>
+                              <div className={styles.establishmentAdminField}>
+                                <span className={styles.establishmentAdminLabel}>Ville</span>
+                                <input
+                                  type="text"
+                                  value={establishmentFormData.city}
+                                  onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, city: e.target.value })}
+                                  className={styles.establishmentAdminInput}
+                                />
+                              </div>
 
-                            <div className={styles.establishmentField}>
-                              <span className={styles.establishmentLabel}>Ville</span>
-                              <input
-                                type="text"
-                                value={establishmentFormData.city}
-                                onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, city: e.target.value })}
-                                className={styles.establishmentInput}
-                              />
-                            </div>
+                              <div className={styles.establishmentAdminFieldFull}>
+                                <span className={styles.establishmentAdminLabel}>Adresse</span>
+                                <input
+                                  type="text"
+                                  value={establishmentFormData.address}
+                                  onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, address: e.target.value })}
+                                  className={styles.establishmentAdminInput}
+                                />
+                              </div>
 
-                            <div className={styles.establishmentField}>
-                              <span className={styles.establishmentLabel}>Pays</span>
-                              <input
-                                type="text"
-                                value={establishmentFormData.country}
-                                onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, country: e.target.value })}
-                                className={styles.establishmentInput}
-                              />
-                            </div>
+                              <div className={styles.establishmentAdminField}>
+                                <span className={styles.establishmentAdminLabel}>Pays</span>
+                                <input
+                                  type="text"
+                                  value={establishmentFormData.country}
+                                  onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, country: e.target.value })}
+                                  className={styles.establishmentAdminInput}
+                                />
+                              </div>
 
-                            <div className={styles.establishmentField}>
-                              <span className={styles.establishmentLabel}>Cuisine</span>
-                              <input
-                                type="text"
-                                value={establishmentFormData.cuisine}
-                                onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, cuisine: e.target.value })}
-                                className={styles.establishmentInput}
-                              />
-                            </div>
+                              <div className={styles.establishmentAdminField}>
+                                <span className={styles.establishmentAdminLabel}>Téléphone</span>
+                                <input
+                                  type="text"
+                                  value={establishmentFormData.phone_number}
+                                  onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, phone_number: e.target.value })}
+                                  className={styles.establishmentAdminInput}
+                                />
+                              </div>
 
-                            <div className={styles.establishmentField}>
-                              <span className={styles.establishmentLabel}>Téléphone</span>
-                              <input
-                                type="text"
-                                value={establishmentFormData.phone_number}
-                                onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, phone_number: e.target.value })}
-                                className={styles.establishmentInput}
-                              />
-                            </div>
+                              <div className={styles.establishmentAdminField}>
+                                <span className={styles.establishmentAdminLabel}>Cuisine</span>
+                                <input
+                                  type="text"
+                                  value={establishmentFormData.cuisine}
+                                  onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, cuisine: e.target.value })}
+                                  className={styles.establishmentAdminInput}
+                                />
+                              </div>
 
-                            <div className={styles.establishmentField}>
-                              <span className={styles.establishmentLabel}>Distinction</span>
-                              <span className={styles.establishmentValue}>
-                                {establishment.award || 'Non renseignée'}
-                              </span>
-                            </div>
+                              <div className={styles.establishmentAdminFieldFull}>
+                                <span className={styles.establishmentAdminLabel}>Menu</span>
+                                <input
+                                  type="url"
+                                  placeholder="https://.../menu.jpg"
+                                  value={establishmentFormData.menu}
+                                  onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, menu: e.target.value })}
+                                  className={styles.establishmentAdminInput}
+                                />
+                                {establishmentFormData.menu.trim() && (
+                                  <img
+                                    src={establishmentFormData.menu}
+                                    alt="Aperçu du menu"
+                                    className={styles.establishmentImagePreview}
+                                  />
+                                )}
+                              </div>
 
-                            <div className={styles.establishmentActions}>
-                              <button className={styles.profileSaveButton} onClick={handleSaveEstablishment}>
-                                Enregistrer
-                              </button>
-                              <button className={styles.profileCancelButton} onClick={cancelEditEstablishment}>
-                                Annuler
-                              </button>
-                            </div>
+                              <div className={styles.establishmentAdminFieldFull}>
+                                <span className={styles.establishmentAdminLabel}>Horaires</span>
+                                <textarea
+                                  value={establishmentFormData.opening_hours}
+                                  onChange={(e) => setEstablishmentFormData({ ...establishmentFormData, opening_hours: e.target.value })}
+                                  className={styles.establishmentAdminTextarea}
+                                  rows={3}
+                                />
+                              </div>
+
+                              <div className={styles.establishmentAdminFieldFull}>
+                                <span className={styles.establishmentAdminLabel}>Photos</span>
+                                <div className={styles.establishmentPhotoInputs}>
+                                  {(establishmentFormData.photos.length > 0 ? establishmentFormData.photos : ['']).map((photo, photoIndex) => (
+                                    <div key={`photo-input-${photoIndex}`} className={styles.establishmentPhotoRow}>
+                                      <input
+                                        type="url"
+                                        placeholder={`https://.../photo-${photoIndex + 1}.jpg`}
+                                        value={photo}
+                                        onChange={(e) => {
+                                          const nextPhotos = [...establishmentFormData.photos]
+                                          nextPhotos[photoIndex] = e.target.value
+                                          setEstablishmentFormData({ ...establishmentFormData, photos: nextPhotos })
+                                        }}
+                                        className={styles.establishmentAdminInput}
+                                      />
+                                      {establishmentFormData.photos.length > 1 && (
+                                        <button
+                                          type="button"
+                                          className={styles.establishmentPhotoRemove}
+                                          onClick={() => {
+                                            const nextPhotos = establishmentFormData.photos.filter((_, index) => index !== photoIndex)
+                                            setEstablishmentFormData({ ...establishmentFormData, photos: nextPhotos.length ? nextPhotos : [''] })
+                                          }}
+                                        >
+                                          Supprimer
+                                        </button>
+                                      )}
+                                    </div>
+                                  ))}
+                                  <button
+                                    type="button"
+                                    className={styles.addButton}
+                                    onClick={() => setEstablishmentFormData({
+                                      ...establishmentFormData,
+                                      photos: [...(establishmentFormData.photos.length ? establishmentFormData.photos : ['']), ''],
+                                    })}
+                                  >
+                                    <Plus size={16} />
+                                    Ajouter une photo
+                                  </button>
+                                  <div className={styles.establishmentPhotoPreviewGrid}>
+                                    {establishmentFormData.photos.map((photo, photoIndex) => (
+                                      photo.trim() ? (
+                                        <img
+                                          key={`photo-preview-${photoIndex}`}
+                                          src={photo}
+                                          alt={`Photo ${photoIndex + 1}`}
+                                          className={styles.establishmentImagePreview}
+                                        />
+                                      ) : null
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className={styles.establishmentAdminField}>
+                                <span className={styles.establishmentAdminLabel}>Distinction</span>
+                                <input
+                                  type="text"
+                                  value={establishment.award || ''}
+                                  className={styles.establishmentAdminInput}
+                                  disabled
+                                />
+                              </div>
+
+                              <div className={styles.establishmentAdminActions}>
+                                <button className={styles.profileSaveButton} onClick={handleSaveEstablishment}>
+                                  Enregistrer
+                                </button>
+                                <button className={styles.profileCancelButton} onClick={cancelEditEstablishment}>
+                                  Annuler
+                                </button>
+                              </div>
                           </div>
                         ) : (
                           <div className={styles.establishmentFields}>
@@ -1149,7 +1301,30 @@ export default function DashboardPage() {
                             <div className={styles.establishmentField}>
                               <span className={styles.establishmentLabel}>Téléphone</span>
                               <span className={styles.establishmentValue}>
-                                {establishment.phone_number || 'Non renseigné'}
+                                {establishment.phone_number || establishment.phone || 'Non renseigné'}
+                              </span>
+                            </div>
+
+                            <div className={styles.establishmentField}>
+                              <span className={styles.establishmentLabel}>Menu</span>
+                              <span className={styles.establishmentValue}>
+                                {coerceToEditableText(establishment.menu) || 'Non renseigné'}
+                              </span>
+                            </div>
+
+                            <div className={styles.establishmentField}>
+                              <span className={styles.establishmentLabel}>Horaires</span>
+                              <span className={styles.establishmentValue}>
+                                {coerceToEditableText(establishment.opening_hours ?? establishment.hours) || 'Non renseignés'}
+                              </span>
+                            </div>
+
+                            <div className={styles.establishmentField}>
+                              <span className={styles.establishmentLabel}>Photos</span>
+                              <span className={styles.establishmentValue}>
+                                {(establishment.photos?.length ?? 0) > 0
+                                  ? `${establishment.photos?.length ?? 0} photo(s)`
+                                  : 'Aucune photo'}
                               </span>
                             </div>
 
@@ -1352,13 +1527,57 @@ export default function DashboardPage() {
                           type="button"
                           className={styles.friendAddButton}
                           onClick={() => handleAddFriend(entry.id)}
-                          disabled={entry.isFriend}
+                          disabled={entry.relationshipStatus === 'friend' || entry.relationshipStatus === 'outgoing_pending'}
                         >
                           <UserPlus size={14} />
-                          {entry.isFriend ? 'Déjà ami' : 'Ajouter'}
+                          {entry.relationshipStatus === 'friend'
+                            ? 'Déjà ami'
+                            : entry.relationshipStatus === 'outgoing_pending'
+                              ? 'Demande envoyée'
+                              : entry.relationshipStatus === 'incoming_pending'
+                                ? 'Voir demandes'
+                                : 'Ajouter'}
                         </button>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {incomingFriendRequests.length > 0 && (
+                  <div className={styles.friendRequestsPanel}>
+                    <div className={styles.favoritesHeader}>
+                      <div>
+                        <h3 className={styles.sectionSubtitle}>Demandes d'amis en attente</h3>
+                        <p className={styles.favoritesLimitNote}>{incomingFriendRequests.length} demande(s)</p>
+                      </div>
+                    </div>
+
+                    <div className={styles.friendSearchResults}>
+                      {incomingFriendRequests.map((request) => (
+                        <div key={`friend-request-${request.id}`} className={styles.friendSearchCard}>
+                          <div>
+                            <p className={styles.friendSearchName}>{request.sender.firstName} {request.sender.lastName}</p>
+                            <p className={styles.friendSearchMeta}>@{request.sender.username}</p>
+                          </div>
+                          <div className={styles.friendRequestActions}>
+                            <button
+                              type="button"
+                              className={styles.friendAcceptButton}
+                              onClick={() => handleRespondToFriendRequest(request.id, 'accept')}
+                            >
+                              Accepter
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.friendRejectButton}
+                              onClick={() => handleRespondToFriendRequest(request.id, 'reject')}
+                            >
+                              Refuser
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -1386,7 +1605,12 @@ export default function DashboardPage() {
                   </aside>
 
                   <div className={styles.friendsDetail}>
-                    {friendProfileLoading && <p className={styles.detailsDate}>Chargement du profil...</p>}
+                    {friendProfileLoading && (
+                      <div className={styles.friendProfileLoadingState}>
+                        <div className={styles.spinner} aria-label="Chargement" />
+                        <p className={styles.detailsDate}>Chargement du profil...</p>
+                      </div>
+                    )}
 
                     {!friendProfileLoading && !selectedFriendProfile && (
                       <div className={styles.listsDetailEmpty}>

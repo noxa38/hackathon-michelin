@@ -14,7 +14,7 @@ import styles from './SearchResultsPage.module.css'
 type ResultType = 'restaurant' | 'accommodation' | 'all'
 const GRID_BATCH_SIZE = 5
 const RESTAURANTS_LIKED_LIST_NAME = 'Restaurants likés'
-const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likées'
+const ACCOMMODATIONS_LIKED_LIST_NAME = 'Hébergements likés'
 
 function includesText(value: string | undefined | null, term: string): boolean {
   if (!value) return false
