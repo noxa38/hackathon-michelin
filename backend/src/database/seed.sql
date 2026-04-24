@@ -20,9 +20,9 @@ DELETE FROM users;
 -- USERS
 -- ============================================================
 INSERT INTO users (username, email, password, first_name, last_name, user_type) VALUES
-('admin','admin@guide.fr','hash','Admin','Guide','admin'),
-('jean','jean@email.fr','hash','Jean','Dupont','individual'),
-('mariepro','marie@email.fr','hash','Marie','Bernard','professional');
+('admin','admin@guide.fr','$2b$10$S1P1wBw.mX7.2uoyc/ZQWu8wBWchi3hMD.RBtkpvFxaNQjOjZgGea','Admin','Guide','admin'),
+('jean','jean@email.fr','$2b$10$S1P1wBw.mX7.2uoyc/ZQWu8wBWchi3hMD.RBtkpvFxaNQjOjZgGea','Jean','Dupont','individual'),
+('mariepro','marie@email.fr','$2b$10$S1P1wBw.mX7.2uoyc/ZQWu8wBWchi3hMD.RBtkpvFxaNQjOjZgGea','Marie','Bernard','professional');
 
 -- ============================================================
 -- RESTAURANTS (50 Établissements Réels Michelin)
